@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tủ Luật Chơi</title>
+<meta name="description" content="Cách chơi các boardgame và trò đấu trí, chơi thử một mình hoặc mở phòng chơi cùng bạn bè.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231f2340'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23fff'/%3E%3Crect x='10' y='10' width='3' height='3' fill='%23fff'/%3E%3Crect x='6.5' y='6.5' width='3' height='3' fill='%23e9a92b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="sheet">
+  <header class="mast">
+    <nav class="nav" aria-label="Chính">
+      <button class="pill" data-go="">Tất cả game</button>
+      <button class="pill" data-go="play">Chơi thử</button>
+      <button class="pill" data-go="rooms">Phòng chơi</button>
+      <button class="pill" id="nav-add" hidden>Thêm game</button>
+      <span class="who" id="who"></span>
+    </nav>
+    <h1>TỦ LUẬT CHƠI</h1>
+    <p class="sub">Cách chơi các boardgame và trò đấu trí, gom vào một chỗ. Chơi thử một mình hoặc mở phòng rủ bạn bè cùng chơi.</p>
+    <canvas class="sprites" id="sprites" height="60" aria-hidden="true"></canvas>
+    <div class="torn"></div>
+  </header>
+  <main class="wrap" id="main"></main>
+  <footer>
+    <div class="torn"></div>
+    <div>Luật tổng hợp từ Wikipedia, Dexerto, bản ghi lời thoại tiếng Anh và quoridorgame.com. Các trò chơi thử là bản tự làm theo kiểu chơi phổ biến, hình vẽ riêng của trang này.</div>
+  </footer>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-h" id="dlg-title">THÊM GAME</div>
+  <form class="ed" id="ed">
+    <label>Tên game<input id="f-name" required maxlength="80"></label>
+    <label>Tên tiếng Anh hoặc tên gốc<input id="f-en" maxlength="80"></label>
+    <label>Nhóm
+      <select id="f-season">
+        <option value="1">Devil's Plan mùa 1</option>
+        <option value="2">Devil's Plan mùa 2</option>
+        <option value="3">Devil's Plan mùa 3</option>
+        <option value="0">Boardgame khác</option>
+      </select>
+    </label>
+    <label>Loại
+      <select id="f-type">
+        <option value="main">Trận chính</option>
+        <option value="prison">Trận trong tù</option>
+        <option value="prize">Trận giải thưởng</option>
+        <option value="exile">Vùng lưu đày</option>
+        <option value="final">Chung kết</option>
+        <option value="hidden">Thử thách ẩn</option>
+        <option value="other">Boardgame</option>
+      </select>
+    </label>
+    <label>Số người chơi<input id="f-players" maxlength="20" placeholder="2 đến 6"></label>
+    <label>Số thứ tự<input id="f-num" maxlength="8" placeholder="3.10"></label>
+    <label class="full">Tóm tắt một dòng<input id="f-meta" maxlength="200" placeholder="Trận chính 5, ngày 5, 6 người chơi."></label>
+    <label class="full">Cách chơi
+      <textarea id="f-body" required></textarea>
+      <span class="hint">Mỗi đoạn cách nhau một dòng trống. Dòng bắt đầu bằng hai dấu thăng là tiêu đề nhỏ.</span>
+    </label>
+    <div class="confirm" id="del-confirm" hidden>
+      <span>Xóa game này khỏi tủ. Mọi người mở trang sẽ không thấy nữa.</span>
+      <button type="button" class="btn danger" id="del-yes">Xóa hẳn</button>
+      <button type="button" class="btn" id="del-no">Giữ lại</button>
+    </div>
+    <div class="dlg-actions">
+      <span class="status" id="ed-status"></span>
+      <button type="button" class="btn danger" id="ed-del" hidden>Xóa game</button>
+      <button type="button" class="btn" id="ed-cancel">Đóng</button>
+      <button type="submit" class="btn primary" id="ed-save">Lưu</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/games.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

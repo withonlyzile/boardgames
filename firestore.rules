@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+
+    // Danh sách game: ai cũng đọc được, chỉ quản trị viên được sửa.
+    match /games/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Mỗi người chỉ đọc được giấy phép quản trị của chính mình. Tạo giấy phép trong Firebase Console.
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Phòng chơi: phải đăng nhập Google mới xem và chơi được.
+    match /rooms/{code} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.host == request.auth.uid
+                    && request.resource.data.memberIds == [request.auth.uid];
+      allow update: if signedIn() && (
+                      request.auth.uid in resource.data.memberIds ||
+                      (resource.data.status == 'lobby' && request.auth.uid in request.resource.data.memberIds));
+      allow delete: if signedIn() && resource.data.host == request.auth.uid;
+    }
+  }
+}

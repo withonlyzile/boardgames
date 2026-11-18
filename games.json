@@ -1,0 +1,1114 @@
+[
+ {
+  "num": "1.1",
+  "name": "Trò chơi virus",
+  "nameEn": "The Virus Game",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người nhận một vai bí mật. Có hai kẻ khủng bố, một kẻ cuồng tín và một cảnh sát. Còn lại là hai nhà nghiên cứu, một nhà báo và 5 dân thường."
+   },
+   {
+    "t": "p",
+    "x": "Một người dân mang kháng thể nhưng chính họ cũng không biết."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi người chọn một số từ 1 đến 12. Kẻ khủng bố lây virus, virus lan sang người có số liền kề. Người nhiễm bệnh không được chữa sẽ chết ở vòng sau."
+   },
+   {
+    "t": "p",
+    "x": "Nhà nghiên cứu tìm người mang kháng thể để chế thuốc giải. Cảnh sát mỗi vòng được bắn một người để tìm khủng bố. Kẻ cuồng tín chết càng sớm thì càng được nhiều piece."
+   },
+   {
+    "t": "p",
+    "x": "Nhà báo phải đoán vai của mọi người, còn sống đến cuối thì được thêm piece. Phe dân thắng khi cả hai kẻ khủng bố chết. Phe khủng bố thắng nếu còn một kẻ khủng bố sống sót."
+   },
+   {
+    "t": "p",
+    "x": "Kết quả là phe khủng bố thắng, mỗi kẻ khủng bố nhận 4 piece. Nhà nghiên cứu không chế được thuốc giải."
+   }
+  ],
+  "meta": "Trận chính 1, ngày 1, 12 người chơi.",
+  "playable": [],
+  "type": "main",
+  "id": "s1-the-virus-game",
+  "order": 0,
+  "players": "12",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.2",
+  "name": "Xếp hình hợp tác",
+  "nameEn": "Cooperative Puzzle",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Người chơi đứng trên một vòng xoay và cùng giải các câu đố hình học qua 10 vòng. Câu đố khó dần sau mỗi vòng. Thua một vòng là cả trò thất bại và quỹ thưởng không tăng."
+   },
+   {
+    "t": "p",
+    "x": "Kết quả là cả nhóm thất bại, quỹ thưởng không được cộng tiền."
+   }
+  ],
+  "meta": "Trận giải thưởng 1, ngày 1, 10 người chơi.",
+  "playable": [],
+  "type": "prize",
+  "id": "s1-cooperative-puzzle",
+  "order": 1,
+  "players": "10",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.3",
+  "name": "Cuộc đua luật",
+  "nameEn": "Rules Race",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người ghép các khối chữ màu thành một luật riêng theo dạng nếu thế này thì thế kia. Luật có thể nhắm vào một người cụ thể. Người có luật ít chữ hơn được đi trước."
+   },
+   {
+    "t": "p",
+    "x": "Xúc xắc đua có các mặt 1, 1, 2, 3, vào tù và ra tù. Người vào tù chỉ được ra khi tung trúng mặt ra tù. Ô văn phòng cho lấy thẻ ra tù, tung thêm lượt hoặc đổi luật chung của cả nhóm."
+   },
+   {
+    "t": "p",
+    "x": "Hạng 1 nhận 3 piece, hạng 2 nhận hai piece, hạng 3 nhận một piece. Hạng 10 mất một piece, hạng 11 mất 3 piece, hạng 12 mất 5 piece."
+   }
+  ],
+  "meta": "Trận chính 2, ngày 2, 12 người chơi.",
+  "playable": [],
+  "type": "main",
+  "id": "s1-rules-race",
+  "order": 2,
+  "players": "12",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.4",
+  "name": "Mảnh ký ức",
+  "nameEn": "Fragments of Memory",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Cả nhóm xem một bức ảnh cảnh bệnh viện trong tối đa 20 phút. Sau đó từng người vào phòng riêng để trả lời 10 câu hỏi về bức ảnh. Mỗi người được trả lời hoặc nhường câu hỏi cho người kế tiếp."
+   },
+   {
+    "t": "p",
+    "x": "Sai một câu là cả nhóm thất bại. Kết quả là nhóm trả lời đúng cả 10 câu và quỹ thưởng được cộng tiền."
+   }
+  ],
+  "meta": "Trận giải thưởng 2, ngày 2, 9 người chơi.",
+  "playable": [],
+  "type": "prize",
+  "id": "s1-fragments-of-memory",
+  "order": 3,
+  "players": "9",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.5",
+  "name": "Số bí mật",
+  "nameEn": "Secret Number",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người bốc một số từ 1 đến 100 nhưng không được xem số của mình. Người chơi mua vé gợi ý bằng piece trong 120 phút. Hai người cùng vào phòng và dùng một loại vé để biết thông tin về hai số của họ."
+   },
+   {
+    "t": "p",
+    "x": "Vé cộng cho biết tổng hai số. Vé nhân cho biết chữ số cuối của tích. Vé chia cho biết thương, còn vé số 0 cho biết hai số có bao nhiêu chữ số 0."
+   },
+   {
+    "t": "p",
+    "x": "Cuối trò mỗi người ghi đáp án. Đoán đúng số của mình được 5 điểm, đoán sai mất 5 điểm. Đoán đúng số người khác được cộng điểm, đoán sai mất một điểm, người ít điểm bị trừ piece."
+   }
+  ],
+  "meta": "Trận chính 3, ngày 3, 11 người chơi.",
+  "playable": [],
+  "type": "main",
+  "id": "s1-secret-number",
+  "order": 4,
+  "players": "11",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.6",
+  "name": "Tháp chữ",
+  "nameEn": "Word Tower",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Cả nhóm có các khối gỗ ghi chữ cái tiếng Anh. Mỗi người xếp một từ tiếng Anh theo chiều dọc trước mặt mình, số từ bằng số người chơi. Phải dùng hết các khối, mỗi vòng có 10 phút."
+   },
+   {
+    "t": "p",
+    "x": "Kết quả là cả nhóm thành công."
+   }
+  ],
+  "meta": "Trận giải thưởng 3, ngày 3, cả nhóm cùng chơi.",
+  "playable": [],
+  "type": "prize",
+  "id": "s1-word-tower",
+  "order": 5,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.7",
+  "name": "Sở thú",
+  "nameEn": "Zoo",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Bàn chơi có 25 ô hình con vật gồm rắn, sư tử, vẹt, khỉ và voi. Mỗi người bốc bí mật 3 thẻ con vật theo một thứ tự và một điều kiện riêng. Người chơi lật công khai một thẻ của mình."
+   },
+   {
+    "t": "p",
+    "x": "Các ô được đem ra đấu giá bằng 30 xu, xu đã trả không lấy lại. Người thắng đấu giá quyết định cách đặt ô lên bàn."
+   },
+   {
+    "t": "p",
+    "x": "Cuối trò, mỗi chuỗi 3 con vật đúng thứ tự của mình được một điểm, theo mọi hướng. Đạt điều kiện riêng thì điểm nhân đôi. Từ hai điểm trở lên được thêm một piece, dưới hai điểm thì mất một piece."
+   }
+  ],
+  "meta": "Trận chính 4, ngày 4.",
+  "playable": [],
+  "type": "main",
+  "id": "s1-zoo",
+  "order": 6,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.8",
+  "name": "Trò chơi cân",
+  "nameEn": "Scale Game",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi nhóm có các khối 5 màu, mỗi khối nặng từ 1 đến 20 g. Người chơi lần lượt đặt hai khối lên cân ảo, mỗi lượt có 5 phút. Từ kết quả cân, cả nhóm phải suy ra khối lượng của từng khối."
+   },
+   {
+    "t": "p",
+    "x": "Kết quả là cả nhóm thất bại."
+   }
+  ],
+  "meta": "Trận giải thưởng 4, ngày 4, nhóm hai đến 3 người ở phòng riêng.",
+  "playable": [],
+  "type": "prize",
+  "id": "s1-scale-game",
+  "order": 7,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.9",
+  "name": "Trải cỏ",
+  "nameEn": "Laying Grass",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Bảng chơi có 30 x 30 ô và 96 mảnh cỏ hình giống khối Tetris. Mỗi lượt, người chơi chọn một trong 5 mảnh kế tiếp trong hàng chờ. Mảnh đầu tiên phải chạm ô xuất phát của mình, các mảnh sau phải chạm phần cỏ của mình."
+   },
+   {
+    "t": "p",
+    "x": "Trên bảng có ô thưởng để nhận piece, cướp mảnh của người khác hoặc đặt đá chặn. Người chơi có thể trả một piece để mua thẻ đổi mảnh."
+   },
+   {
+    "t": "p",
+    "x": "Cuối trò tính hình vuông lớn nhất được phủ kín cỏ. Hình 5 x 5 thì an toàn, 6 x 6 được một piece."
+   },
+   {
+    "t": "p",
+    "x": "Hình 7 x 7 được hai piece, 8 x 8 được 3 piece. Nhỏ hơn 5 x 5 thì bị trừ piece."
+   }
+  ],
+  "meta": "Trận chính 5, ngày 5.",
+  "playable": [],
+  "type": "main",
+  "id": "s1-laying-grass",
+  "order": 8,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.10",
+  "name": "Ghép mặt",
+  "nameEn": "Montage",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Màn hình chiếu lần lượt các ảnh chân dung, mỗi ảnh hiện 3 giây. Người chơi bấm chuông khi thấy một khuôn mặt lặp lại. Người bấm đúng nhanh nhất được một piece."
+   },
+   {
+    "t": "p",
+    "x": "Bấm sai bị trừ một điểm nhưng trò vẫn tiếp tục. Tổng điểm xuống dưới âm 10 là cả nhóm thất bại. Kết quả là cả nhóm thành công."
+   }
+  ],
+  "meta": "Trận giải thưởng 5, ngày 5.",
+  "playable": [
+   "montage"
+  ],
+  "type": "prize",
+  "id": "s1-montage",
+  "order": 9,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.11",
+  "name": "Phương trình cao thấp",
+  "nameEn": "Equation High-Low",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Toàn bộ piece được đổi thành chip. Mỗi người nhận thẻ số từ 1 đến 10 và thẻ phép tính cộng, trừ, nhân, chia, căn. Người chơi ghép một phép tính có kết quả gần 1 hoặc gần 20."
+   },
+   {
+    "t": "p",
+    "x": "Người chơi cược như poker và chọn thấp hoặc cao. Bên thấp, ai gần 1 nhất thắng. Bên cao, ai gần 20 nhất thắng."
+   },
+   {
+    "t": "p",
+    "x": "Người hết chip bị loại, trò chơi dừng khi còn 3 người."
+   }
+  ],
+  "meta": "Trận chính 6, ngày 6, 7 người chơi lúc bắt đầu.",
+  "playable": [],
+  "type": "main",
+  "id": "s1-equation-high-low",
+  "order": 10,
+  "players": "7",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.12",
+  "name": "Ba quân thẳng hàng 4 người",
+  "nameEn": "Four Player Three in a Row",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Bàn chơi có 4 x 4 ô. Mỗi người ngồi phòng riêng, đấu với ba người kia và một người chơi bí ẩn. Ai xếp được 3 quân cùng màu thẳng hàng trước thì thắng."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi ô chồng tối đa 3 quân và chỉ quân trên cùng được tính. Quân đi một ô theo mọi hướng, không có nước đi thì bỏ lượt. Người chơi còn phải đoán ai là người bí ẩn."
+   }
+  ],
+  "meta": "Trận giải thưởng 6, ngày 6, 3 người chơi và một người bí ẩn.",
+  "playable": [],
+  "type": "prize",
+  "id": "s1-four-player-three-in-a-row",
+  "order": 11,
+  "players": "3",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.13",
+  "name": "Cờ caro mù",
+  "nameEn": "Blind Gomoku",
+  "season": 1,
+  "body": [
+   {
+    "t": "p",
+    "x": "Người trong tù mở phòng bí mật bằng mã 2024, mã giải từ gợi ý trên một khối bát diện. Bên trong là ván cờ caro với một nhân viên của chương trình. Mặt trên và mặt bên của quân cờ giống nhau, chỉ mặt dưới lộ màu thật."
+   },
+   {
+    "t": "p",
+    "x": "Người chơi phải nhớ vị trí quân của mình. Ai xếp 5 quân thẳng hàng trước thì thắng. Thắng được 10 piece, thua thì bị loại."
+   }
+  ],
+  "meta": "Phòng bí mật trong tù, từ đêm 5, một người chơi mỗi ngày.",
+  "playable": [
+   "gomoku"
+  ],
+  "type": "hidden",
+  "id": "s1-blind-gomoku",
+  "order": 12,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "1.14",
+  "name": "Chung kết",
+  "nameEn": "Final Match",
+  "season": 1,
+  "body": [
+   {
+    "t": "h",
+    "x": "Cờ 9 quân · Nine Men's Morris"
+   },
+   {
+    "t": "p",
+    "x": "Mỗi người có 9 quân. Xếp được 3 quân thẳng hàng thì bắt một quân của đối thủ. Phải đặt hết quân rồi mới được di chuyển sang điểm kề bên."
+   },
+   {
+    "t": "p",
+    "x": "Khi chỉ còn 3 quân, người chơi được nhảy tới bất kỳ điểm trống nào."
+   },
+   {
+    "t": "h",
+    "x": "Lục giác · Hexagon"
+   },
+   {
+    "t": "p",
+    "x": "Người chơi ghi nhớ các con số trên bảng hình lục giác, sau đó số được thay bằng chữ cái. Màn hình đưa ra một tổng mục tiêu. Người chơi bấm chuông và nêu 3 chữ cái có tổng đúng bằng mục tiêu."
+   },
+   {
+    "t": "p",
+    "x": "Đáp đúng được một điểm, đáp sai mất một điểm."
+   }
+  ],
+  "meta": "Chung kết, ai thắng hai trò trước là vô địch.",
+  "playable": [
+   "morris",
+   "hexagon"
+  ],
+  "type": "final",
+  "id": "s1-final-match",
+  "order": 13,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.1",
+  "name": "Cảnh sát gian",
+  "nameEn": "Crooked Cops",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Có 12 cảnh sát chia ba đội đỏ, xanh lam, xanh lục. Trong số đó có hai cảnh sát gian giấu mặt."
+   },
+   {
+    "t": "p",
+    "x": "Hai tên trộm di chuyển bí mật trên bản đồ tàu điện ngầm Seoul có 176 ga. 28 ga có giấu piece, trộm gom được tối đa 12 piece."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi vòng trộm đi trước, tối đa hai ga. Mỗi cảnh sát có hai hành động là điều tra hoặc bắt. Cảnh sát gian được phép nói dối đồng đội và lệnh bắt của họ không có hiệu lực."
+   },
+   {
+    "t": "p",
+    "x": "Trò chơi kết thúc khi bắt được cả hai trộm, trộm gom đủ 12 piece hoặc hết 15 vòng. Quỹ thưởng được 100.000.000 won nếu xong trong 10 vòng, mỗi vòng sau đó trừ 20.000.000 won."
+   }
+  ],
+  "meta": "Trận chính 1, ngày 1, 14 người chơi.",
+  "playable": [],
+  "type": "main",
+  "id": "s2-crooked-cops",
+  "order": 14,
+  "players": "14",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.2",
+  "name": "Bỏ một",
+  "nameEn": "Remove One",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người có bộ thẻ số từ 1 đến 8. Mỗi vòng, người chơi đặt úp hai thẻ, lật cả hai, rồi chọn bí mật một thẻ để nộp. Số trùng nhau bị loại, số nhỏ nhất không trùng thắng vòng và được điểm bằng số đó."
+   },
+   {
+    "t": "p",
+    "x": "Trò có 18 vòng, bộ thẻ được làm mới sau vòng 6 và vòng 12. Ở các vòng tính điểm, người cao điểm nhất được an toàn và rời bàn. Người còn lại cuối cùng bị loại."
+   }
+  ],
+  "meta": "Trận trong tù 1, đêm 1, 7 người chơi.",
+  "playable": [],
+  "type": "prison",
+  "id": "s2-remove-one",
+  "order": 15,
+  "players": "7",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.3",
+  "name": "Ẩn số",
+  "nameEn": "Unknown",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Bàn chơi có ô 6 màu và một ô đích màu đen ở giữa. Mỗi người có một khối lập phương 6 mặt màu, mỗi lượt lăn khối sang ô bên cạnh. Lăn vào khối của người khác thì đẩy khối đó đi một ô."
+   },
+   {
+    "t": "p",
+    "x": "Trò có các luật ẩn tự kích hoạt mà không báo trước. Sau mỗi vòng, chương trình công bố thêm một luật ẩn. Ai tới ô giữa đầu tiên thì trò kết thúc ngay."
+   },
+   {
+    "t": "p",
+    "x": "Hạng 1 nhận 3 piece, hạng 2 đến hạng 5 mỗi người nhận một piece."
+   }
+  ],
+  "meta": "Trận chính 2, ngày 2.",
+  "playable": [],
+  "type": "main",
+  "id": "s2-unknown",
+  "order": 16,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.4",
+  "name": "Đấu giá thời gian",
+  "nameEn": "Time Auction",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người có 10 phút thời gian giấu kín và chơi 19 vòng. Đầu vòng, mọi người giữ nút bấm, ai thả tay sớm là bỏ vòng đó. Người còn giữ nút sẽ trả giá bằng thời gian mình giữ."
+   },
+   {
+    "t": "p",
+    "x": "Ai giữ lâu nhất thắng vòng và được một thẻ thắng. Cuối trò, người nhiều thẻ nhất nhận một piece. Người ít thẻ nhất bị loại."
+   }
+  ],
+  "meta": "Trận trong tù 2, đêm 2.",
+  "playable": [],
+  "type": "prison",
+  "id": "s2-time-auction",
+  "order": 17,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.5",
+  "name": "Quái vật Halloween",
+  "nameEn": "Halloween Monster",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người có 5 điểm thắng và một con dao. Người chơi lập liên minh tối đa 3 người và được chuyển điểm trong liên minh. Mỗi lượt, người chơi dùng một vũ khí để tấn công quái vật trên chiến trường."
+   },
+   {
+    "t": "p",
+    "x": "Vũ khí gồm dao, thuốc độc, băng, song kiếm, lựu đạn và thuốc nổ. Mỗi loại có sức công khác nhau."
+   },
+   {
+    "t": "p",
+    "x": "Ai hạ quái vật thì nhận điểm và piece rơi ra. Điểm của liên minh được chia đều cho các thành viên."
+   },
+   {
+    "t": "p",
+    "x": "Trò có luật ẩn là ô số 10 và 11 cũng nằm trong chiến trường. Người đứng ở đó có thể bị tấn công như quái vật, bị hạ thì bị loại. Người có điểm cao nhất nhận 6 piece."
+   }
+  ],
+  "meta": "Trận chính 3, ngày 3.",
+  "playable": [],
+  "type": "main",
+  "id": "s2-halloween-monster",
+  "order": 18,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.6",
+  "name": "Hold'em bắn tỉa",
+  "nameEn": "Sniper Hold'em",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Đây là biến thể của poker Texas Hold'em với bộ thẻ số từ 1 đến 10. Mỗi người có 60 chip, đạt 75 chip là an toàn. Mỗi người có hai thẻ riêng và dùng chung 4 thẻ trên bàn."
+   },
+   {
+    "t": "p",
+    "x": "Trước khi lật bài, mỗi người được bắn tỉa một bộ bài, ví dụ sảnh cao nhất là 8. Ai có đúng bộ bài đó thì bị xếp xuống cuối. Người cuối cùng chưa đạt 75 chip bị loại."
+   }
+  ],
+  "meta": "Trận trong tù 3, đêm 3.",
+  "playable": [],
+  "type": "prison",
+  "id": "s2-sniper-hold-em",
+  "order": 19,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.7",
+  "name": "Đảo giấu vàng",
+  "nameEn": "Treasure Island",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Bàn chơi có 81 ô gồm đất, nước, hàng rào và tường. 10 chiếc hộp nằm trên đất, một hộp có rương báu. Người chơi đấu giá mũi tên rồi nối mũi tên từ ô xuất phát để mở hộp."
+   },
+   {
+    "t": "p",
+    "x": "Mở hộp được điểm và một gợi ý về vị trí rương. Ai tìm được rương thì trò kết thúc ngay và người đó nhận phần thưởng riêng."
+   },
+   {
+    "t": "p",
+    "x": "Từ 41 điểm trở lên được hai piece, 31 đến 40 điểm được một piece. Từ 10 đến 20 điểm mất một piece, dưới 10 điểm mất hai piece."
+   }
+  ],
+  "meta": "Trận chính 4, ngày 4.",
+  "playable": [],
+  "type": "main",
+  "id": "s2-treasure-island",
+  "order": 20,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.8",
+  "name": "Xúc xắc ba viên",
+  "nameEn": "Triple Dice",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người có 9 viên xúc xắc trắng công khai, một viên đỏ và một viên xanh tung bí mật. Mỗi vòng, người chơi lần lượt nộp bộ 3 viên. Bộ ba giống nhau cao nhất, rồi đến sảnh, đôi và lẻ."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi lượt nộp, hạng 1 được 6 điểm, hạng 2 được 3 điểm, hạng 3 được một điểm. Đầu vòng, người chơi đoán tổng điểm của mình, đoán đúng thì điểm vòng đó nhân đôi. Đoán đúng 0 điểm được thưởng 40 điểm."
+   },
+   {
+    "t": "p",
+    "x": "Người cao điểm nhất nhận một piece, người thấp điểm nhất bị loại."
+   }
+  ],
+  "meta": "Trận trong tù 4, đêm 4, 4 người chơi.",
+  "playable": [],
+  "type": "prison",
+  "id": "s2-triple-dice",
+  "order": 21,
+  "players": "4",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.9",
+  "name": "Mancala cân bằng",
+  "nameEn": "Balance Mancala",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Bàn chơi hình tròn có 12 ô ba màu đỏ, xanh lam, xanh lục."
+   },
+   {
+    "t": "p",
+    "x": "Bàn còn có một ô thiên thần, một ô ác quỷ và mỗi người có 4 quân. Mỗi lượt, người chơi bốc hết quân ở một ô có quân của mình. Sau đó rải từng quân theo chiều kim đồng hồ."
+   },
+   {
+    "t": "p",
+    "x": "Quân cuối rơi vào ô nào thì chủ quân được điểm màu đó. Điểm cuối cùng được tính theo màu thấp nhất trừ đi khoảng chênh với màu cao nhất. Vì thế người chơi phải giữ ba màu cân bằng."
+   },
+   {
+    "t": "p",
+    "x": "Người dưới 15 điểm mất một nửa số piece. Người thấp điểm nhất đưa piece cho người cao điểm nhất."
+   }
+  ],
+  "meta": "Trận chính 5, ngày 5.",
+  "playable": [],
+  "type": "main",
+  "id": "s2-balance-mancala",
+  "order": 22,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.10",
+  "name": "Bao tường",
+  "nameEn": "Wall Go",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người có hai quân trên bàn cờ ô vuông. Mỗi lượt, người chơi đi một quân một hoặc hai ô, rồi dựng một bức tường cạnh ô vừa đến. Mỗi lượt có 90 giây, hết giờ thì tường được đặt ngẫu nhiên."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi người được phá tường một lần. Trò kết thúc khi mọi quân đều bị tường bao kín. Người có vùng đất lớn nhất được an toàn và nhận một piece."
+   },
+   {
+    "t": "p",
+    "x": "Hai người còn lại đấu lại một ván không có phá tường, ai vùng nhỏ hơn bị loại."
+   }
+  ],
+  "meta": "Trận trong tù 5, đêm 5, 3 người chơi.",
+  "playable": [],
+  "type": "prison",
+  "id": "s2-wall-go",
+  "order": 23,
+  "players": "3",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.11",
+  "name": "Nghi ngờ và đặt cược",
+  "nameEn": "Doubt and Bet",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Bộ bài có 60 thẻ gồm 5 màu và thẻ cầu vồng thay được mọi màu. Mỗi người có 5 ô thẻ úp. Người đi đầu đoán tổng số thẻ của một màu trên bàn và cược bằng piece hoặc chip ô thẻ."
+   },
+   {
+    "t": "p",
+    "x": "Người kế tiếp chấp nhận rồi đoán cao hơn, hoặc nghi ngờ để đấu tay đôi. Hai bên cược tiếp đến khi theo hoặc bỏ. Lật bài ra, ai đúng thì lấy hết tiền cược."
+   },
+   {
+    "t": "p",
+    "x": "Người hết piece bị loại, trò dừng khi còn 3 người. Người nhiều piece nhất vào thẳng chung kết."
+   }
+  ],
+  "meta": "Trận chính 6, ngày 6.",
+  "playable": [],
+  "type": "main",
+  "id": "s2-doubt-and-bet",
+  "order": 24,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.12",
+  "name": "Kim tự tháp phương trình",
+  "nameEn": "Equation Pyramid",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi vòng có một kim tự tháp 10 ô, mỗi ô có một số và một phép tính. Người chơi chọn 3 ô ghép thành phép tính bằng con số mục tiêu. Phép tính của ô đầu tiên không được tính."
+   },
+   {
+    "t": "p",
+    "x": "Ai tìm ra thì bấm chuông và nói đáp án trong 10 giây. Đúng được một điểm, sai hoặc trùng đáp án mất một điểm. Mỗi vòng kéo dài tối đa 3 phút."
+   },
+   {
+    "t": "p",
+    "x": "Sau 10 vòng, người cao điểm vào chung kết."
+   }
+  ],
+  "meta": "Trận trong tù 6, đêm 6, hai người chơi.",
+  "playable": [
+   "pyramid"
+  ],
+  "type": "prison",
+  "id": "s2-equation-pyramid",
+  "order": 25,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.13",
+  "name": "Chung kết",
+  "nameEn": "Final Match",
+  "season": 2,
+  "body": [
+   {
+    "t": "h",
+    "x": "Lớn hay nhỏ · Big or Small"
+   },
+   {
+    "t": "p",
+    "x": "Mỗi người có bộ thẻ từ 0 đến 10 và 10 chip, trò chơi có 18 vòng. Mỗi vòng, nhà cái lật một thẻ, một người đặt úp một thẻ. Người kia đoán thẻ úp lớn hơn hay nhỏ hơn và cược chip."
+   },
+   {
+    "t": "p",
+    "x": "Đoán đúng được gấp đôi số chip đã cược."
+   },
+   {
+    "t": "h",
+    "x": "Hổ và dê · Bagh Chal"
+   },
+   {
+    "t": "p",
+    "x": "Hai bàn cờ được chơi cùng lúc. Trên mỗi bàn, một người cầm 4 con hổ, người kia cầm 20 con dê. Hổ ăn dê bằng cách nhảy qua."
+   },
+   {
+    "t": "p",
+    "x": "Hổ thắng khi ăn đủ 5 con dê, dê thắng khi chặn hết đường đi của hổ."
+   },
+   {
+    "t": "h",
+    "x": "Câu hỏi và sự thật · Question and Truth"
+   },
+   {
+    "t": "p",
+    "x": "Mỗi người xếp 8 thẻ bài theo thứ tự bí mật, thẻ cùng chất phải tăng dần. Hai người cược token, ai cược cao hơn thì được hỏi một câu hoặc đoán toàn bộ thứ tự."
+   },
+   {
+    "t": "p",
+    "x": "Đoán đúng toàn bộ thứ tự là thắng."
+   }
+  ],
+  "meta": "Chung kết, ai thắng hai trò trước là vô địch.",
+  "playable": [
+   "bigsmall",
+   "baghchal"
+  ],
+  "type": "final",
+  "id": "s2-final-match",
+  "order": 26,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "2.14",
+  "name": "Thử thách ẩn",
+  "nameEn": "Hidden Stages",
+  "season": 2,
+  "body": [
+   {
+    "t": "p",
+    "x": "Ở khu sinh hoạt có thử thách Đường đi quân mã. Quân mã phải đi qua mỗi ô đúng một lần trên ba bàn cờ từ nhỏ đến lớn."
+   },
+   {
+    "t": "p",
+    "x": "Dưới nhà tù có đường hầm dẫn tới một cái giếng. Người chơi phải tìm chìa khóa mở két trong 10 phút khi nước dâng lên."
+   }
+  ],
+  "meta": "Thử thách phụ, một người chơi mỗi lần.",
+  "playable": [
+   "knight"
+  ],
+  "type": "hidden",
+  "id": "s2-hidden-stages",
+  "order": 27,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "3.1",
+  "name": "Chọn một trong hai",
+  "nameEn": "Either Or",
+  "season": 3,
+  "body": [
+   {
+    "t": "p",
+    "x": "Người chơi trải qua 10 lần chọn giữa hai phương án và 4 trò nhỏ. Mỗi lần chọn và mỗi trò nhỏ đều cộng hoặc trừ điểm. Thứ hạng ở trò nhỏ đầu tiên dùng để phân định khi bằng điểm."
+   },
+   {
+    "t": "p",
+    "x": "Ví dụ, lần chọn thứ nhất là Thưởng hoặc Bảo hiểm. Thưởng cho một piece nếu cuối trò được ở khu sinh hoạt. Bảo hiểm cho hai piece nếu cuối trò phải vào tù."
+   },
+   {
+    "t": "p",
+    "x": "Hạng 1 đến hạng 6 ở khu sinh hoạt, hạng 7 đến hạng 14 vào tù. Hai hạng cuối bị loại."
+   },
+   {
+    "t": "h",
+    "x": "Đếm khối · Count the Cubes"
+   },
+   {
+    "t": "p",
+    "x": "Người chơi đếm số khối lập phương trong một hình 3 chiều rồi nhập đáp án. Trả lời sai thì bị khóa 20 giây. Thứ tự trả lời đúng là thứ hạng ưu tiên cho cả trận."
+   },
+   {
+    "t": "h",
+    "x": "Đếm hình chữ nhật · Count the Rectangles"
+   },
+   {
+    "t": "p",
+    "x": "Người chơi chọn đấu theo đội 3 người hoặc một mình. Mỗi câu là một lưới ô số."
+   },
+   {
+    "t": "p",
+    "x": "Người chơi đếm các hình chữ nhật có tổng bằng con số mục tiêu. Đội nào trả lời đúng hai câu trước thì thắng."
+   },
+   {
+    "t": "h",
+    "x": "Trải cỏ · Lay the Grass"
+   },
+   {
+    "t": "p",
+    "x": "Bảng là một công viên 114 ô. Mỗi người chọn một mảnh cỏ có số từ 6 đến 13. Đặt được mảnh cỏ thì được điểm bằng số trên mảnh, không đặt được thì không có điểm."
+   },
+   {
+    "t": "h",
+    "x": "Poker trí nhớ · Memory Poker"
+   },
+   {
+    "t": "p",
+    "x": "16 lá bài được lật ngửa trong 20 giây rồi úp xuống. Bàn lật 3 lá chung, mỗi người chọn hai lá úp để ghép thành bộ 5 lá. Bộ mạnh hơn thắng, nhớ sai vị trí là lật nhầm lá."
+   },
+   {
+    "t": "p",
+    "x": "Trò chỉ dành cho hạng 15 và hạng 16, ai thắng thì leo lên một hạng."
+   }
+  ],
+  "meta": "Trận chính 1, ngày 1, 16 người chơi.",
+  "playable": [
+   "cubes",
+   "poker"
+  ],
+  "type": "main",
+  "id": "s3-either-or",
+  "order": 28,
+  "players": "16",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "3.2",
+  "name": "Nặng 13",
+  "nameEn": "Heavy 13",
+  "season": 3,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người có 7 thẻ số từ 0 đến 6 và 7 chip màu. Mỗi vòng, người chơi nộp úp một thẻ và một chip. Thẻ quyết định viên đá nặng bao nhiêu, chip quyết định đá đặt lên giá đỡ màu nào."
+   },
+   {
+    "t": "p",
+    "x": "Người nộp chip cầu vồng đặt trước, sau đó ai có số lớn hơn thì đặt trước. Mỗi người được bỏ lượt một lần trong vòng. Khi tổng trên một giá đỡ đạt từ 13 trở lên, người vừa đặt phải nhận hết đá trên giá."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi viên đá nhận về là một điểm phạt. Trò có 14 vòng, người ít điểm phạt nhất nhận 4 piece, hạng 6 và hạng 7 bị loại."
+   }
+  ],
+  "meta": "Trận trong tù 1, đêm 1, 7 người chơi.",
+  "playable": [],
+  "type": "prison",
+  "id": "s3-heavy-13",
+  "order": 29,
+  "players": "7",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "3.3",
+  "name": "Sàn chứng khoán bí ẩn",
+  "nameEn": "Mystery Stock Market",
+  "season": 3,
+  "body": [
+   {
+    "t": "p",
+    "x": "Có 7 mã cổ phiếu, mỗi mã giá khởi điểm 10.000 won. Mỗi người có 100.000 won tiền ảo và giao dịch trên máy riêng. Trò có 24 vòng, mỗi vòng 5 phút."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi mã có luật tăng giảm giá giấu kín. Luật được hé lộ dần ở vòng 5, 10, 15 và lộ hết ở vòng 20. Một piece đổi được một đoạn luật hoặc 10.000 won tiền ảo."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi người được dùng một lần bí mật để che giá của một mã trong hai vòng. Xếp hạng theo tổng tài sản sau vòng 24. Hạng 1 đến hạng 4 ở khu sinh hoạt, hạng cuối bị loại."
+   }
+  ],
+  "meta": "Trận chính 2, ngày 2, 12 người chơi.",
+  "playable": [],
+  "type": "main",
+  "id": "s3-mystery-stock-market",
+  "order": 30,
+  "players": "12",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "3.4",
+  "name": "Cò quay Nga",
+  "nameEn": "Russian Roulette",
+  "season": 3,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người có 16 điểm tín dụng. Khẩu súng ảo có 6 ổ đạn, hai ổ có đạn. Mỗi lượt, người chơi tiêu điểm để xem ổ đạn, xoay súng hoặc tráo hai ổ liền nhau."
+   },
+   {
+    "t": "p",
+    "x": "Xem công khai hai ổ tốn một điểm, xem bí mật tốn hai điểm. Xoay một nấc tốn 3 điểm, xoay hai nấc tốn 4 điểm. Tráo hai ổ tốn 6 điểm và có thể góp từ nhiều lượt."
+   },
+   {
+    "t": "p",
+    "x": "Khi 3 người đã tiêu hết điểm, súng được bóp lần lượt từng ổ. Hai người ở vị trí có đạn bị loại, người còn lại mỗi người nhận một piece."
+   }
+  ],
+  "meta": "Trận trong tù 2, đêm 2, 6 người chơi.",
+  "playable": [],
+  "type": "prison",
+  "id": "s3-russian-roulette",
+  "order": 31,
+  "players": "6",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "3.5",
+  "name": "Vùng lưu đày",
+  "nameEn": "Exile Zone",
+  "season": 3,
+  "body": [
+   {
+    "t": "h",
+    "x": "Ghép piece · Piece Puzzle"
+   },
+   {
+    "t": "p",
+    "x": "Người chơi ghép 8 mảnh piece thành hình mẫu trên màn hình rồi bấm chuông. Người về cuối bị đưa về nhà."
+   },
+   {
+    "t": "h",
+    "x": "Tìm điểm khác · Spot the Difference"
+   },
+   {
+    "t": "p",
+    "x": "Ảnh gốc hiện 3 phút rồi biến mất, sau đó hiện ảnh có 5 điểm khác. Người chơi có hai phút để đánh dấu."
+   },
+   {
+    "t": "h",
+    "x": "Mật mã · Secret Code"
+   },
+   {
+    "t": "p",
+    "x": "Mỗi câu đưa ra các điều kiện về thẻ bài. Người chơi tìm mật mã 4 chữ thỏa mọi điều kiện rồi bấm chuông trả lời trong 10 giây."
+   },
+   {
+    "t": "h",
+    "x": "Rào vòng · Loop Fence Puzzle"
+   },
+   {
+    "t": "p",
+    "x": "Người chơi nối các chấm thành một vòng rào khép kín. Số trong mỗi ô cho biết ô đó có bao nhiêu cạnh là rào."
+   },
+   {
+    "t": "h",
+    "x": "Xếp hình đối xứng · Symmetrical Puzzle"
+   },
+   {
+    "t": "p",
+    "x": "Người chơi ghép mảnh thành một hình đối xứng trái phải, không được lật úp mảnh. Phải hoàn thành cả 3 bộ màu rồi bấm chuông."
+   },
+   {
+    "t": "h",
+    "x": "Phép thử thần linh · Divine Test"
+   },
+   {
+    "t": "p",
+    "x": "Đây là thử thách ẩn, mỗi ngày một người thử. Người chơi điền ma phương 7 x 7 sao cho tổng hàng ngang, dọc và chéo đều bằng nhau. Kết quả chưa có trong các tập đã ra."
+   }
+  ],
+  "meta": "Các trận đấu dành cho người đã bị loại, tối đa 4 người ở vùng lưu đày.",
+  "playable": [
+   "loop",
+   "spot",
+   "magic"
+  ],
+  "type": "exile",
+  "id": "s3-exile-zone",
+  "order": 32,
+  "players": "",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "3.6",
+  "name": "Chợ đen đá quý",
+  "nameEn": "Gem Black Market",
+  "season": 3,
+  "body": [
+   {
+    "t": "p",
+    "x": "Bộ bài có 11 thẻ kim cương, vàng, bạc, đồng và hai thẻ bom âm 6, âm 4. Mỗi người nhận một thẻ úp, 3 thẻ ngửa vào ô người mua. Mỗi người còn bốc một thẻ trái cây để biết bạn bí mật của mình."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi vòng có hai lượt đổi thẻ bắt buộc với người khác, ô người mua hoặc ô bỏ. Thẻ bom chỉ đổi được với người khác. Một piece cho xem một thẻ trong ô người mua hoặc ô bỏ."
+   },
+   {
+    "t": "p",
+    "x": "Thẻ cùng loại với thẻ trong ô người mua thì được điểm, giữ bom thì bị trừ điểm. Sau 3 vòng, điểm cuối bằng điểm của mình nhân điểm của bạn bí mật."
+   }
+  ],
+  "meta": "Trận chính 3, ngày 3, 9 người chơi.",
+  "playable": [],
+  "type": "main",
+  "id": "s3-gem-black-market",
+  "order": 33,
+  "players": "9",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "3.7",
+  "name": "Heo đất",
+  "nameEn": "Piggy Bank",
+  "season": 3,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi heo đất có đồng xu đen và trắng. Đến lượt, người chơi bỏ thêm từ 1 đến 5 xu vào heo rồi chuyển cho người khác. Người nhận phải nói số xu của một màu trong 20 giây."
+   },
+   {
+    "t": "p",
+    "x": "Người khác có 10 giây để bấm chuông nghi ngờ. Nói sai thì người nghi ngờ được một điểm, người nói mất một điểm. Nói đúng thì người nghi ngờ mất một điểm."
+   },
+   {
+    "t": "p",
+    "x": "Khi có người đạt 5 điểm, người thấp nhất bị loại, người cao nhất nhận 3 piece."
+   }
+  ],
+  "meta": "Trận trong tù 3, đêm 3, 4 người chơi.",
+  "playable": [],
+  "type": "prison",
+  "id": "s3-piggy-bank",
+  "order": 34,
+  "players": "4",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "3.8",
+  "name": "Bingo đấu giá",
+  "nameEn": "Auction Bingo",
+  "season": 3,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người có thẻ bingo 9 ô, mỗi ô là hình tam giác, tròn hoặc sao. Mỗi người có 30 won bằng các đồng 1, 2, 3, 5 và 10 won. Trò có 7 vòng, mỗi vòng chọn một hình rồi đấu giá hình đó."
+   },
+   {
+    "t": "p",
+    "x": "Người trả cao nhất nhận số hình bằng số người cùng đấu giá hình đó. Tiền đã trả không lấy lại, kể cả khi thua. Người thắng không được công bố, chỉ lộ giá thắng."
+   },
+   {
+    "t": "p",
+    "x": "Hết 7 vòng, xếp hạng theo số hàng bingo, rồi số ô đã lấp, rồi tiền còn lại. Hạng cuối bị loại."
+   }
+  ],
+  "meta": "Trận chính 4, ngày 4, 7 người chơi và một khách mời.",
+  "playable": [],
+  "type": "main",
+  "id": "s3-auction-bingo",
+  "order": 35,
+  "players": "7",
+  "source": "The Devil's Plan"
+ },
+ {
+  "num": "3.9",
+  "name": "Bao tường II",
+  "nameEn": "Wall Go II",
+  "season": 3,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người có một quân vuông và một quân tròn. Quân vuông đi một hoặc hai ô thẳng, quân tròn đi một ô rồi rẽ thêm một ô. Đi xong phải dựng một bức tường cạnh ô vừa đến."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi người có một lần phá tường, mỗi lượt có 90 giây. Người có vùng đất lớn nhất được an toàn và nhận một piece. Hai người còn lại đấu lại, ai vùng nhỏ hơn bị loại."
+   }
+  ],
+  "meta": "Trận trong tù 4, đêm 4, 3 người chơi.",
+  "playable": [],
+  "type": "prison",
+  "id": "s3-wall-go-ii",
+  "order": 36,
+  "players": "3",
+  "source": "The Devil's Plan"
+ }
+]
