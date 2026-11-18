@@ -1,6 +1,6 @@
 # Bật đăng nhập Google và phòng chơi cho Tủ Luật Chơi
 
-Trang web ở https://withonlyzile.github.io/tu-luat-choi/ đã chạy được phần luật chơi và các trò chơi trên một máy. Đăng nhập Google, phòng chơi với bạn bè và sửa game trên web cần thêm Firebase, dịch vụ miễn phí của Google. Làm một lần, mất khoảng 10 phút.
+Trang web ở https://withonlyzile.github.io/boardgames/ đã chạy được phần luật chơi và các trò chơi trên một máy. Đăng nhập Google, phòng chơi với bạn bè và sửa game trên web cần thêm Firebase, dịch vụ miễn phí của Google. Làm một lần, mất khoảng 10 phút.
 
 ## 1. Tạo dự án Firebase
 
