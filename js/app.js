@@ -191,8 +191,8 @@ function linkedGames(key){ return games.filter(g => (g.playable||[]).includes(ke
 function renderPlayList(){
   const solo = Object.entries(G).filter(([,g]) => g.kind==="solo"), online = Object.entries(G).filter(([,g]) => g.kind==="online");
   const card = ([k,g]) => `<div class="playcard"><h3>${esc(g.name)}</h3><p>${esc(g.desc)}</p><div class="lcdrow" style="justify-content:flex-start">${g.kind==="solo"
-      ? `<button class="lcdbtn" data-go="play-${k}">CHƠI</button>` : `<button class="lcdbtn" data-go="rooms-${k}">MỞ PHÒNG</button><button class="lcdbtn" data-go="local-${k}">MỘT MÁY</button>`}</div></div>`;
-  main.innerHTML = `<div class="sec">CHƠI VỚI BẠN BÈ</div><p>Đăng nhập Google, mở phòng rồi gửi mã phòng cho bạn. Hoặc hai người chơi chung một máy.</p><div class="playlist">${online.map(card).join("")}</div>
+      ? `<button class="lcdbtn" data-go="play-${k}">CHƠI</button>` : `<button class="lcdbtn" data-go="rooms-${k}">VÀO PHÒNG</button><button class="lcdbtn" data-go="local-${k}">MỘT MÁY</button>`}</div></div>`;
+  main.innerHTML = `<div class="sec">CHƠI VỚI BẠN BÈ</div><p>Đăng nhập Google rồi vào một trong 3 phòng có sẵn của mỗi trò. Hoặc hai người chơi chung một máy.</p><div class="playlist">${online.map(card).join("")}</div>
     <div class="sec">CHƠI MỘT MÌNH</div><div class="playlist">${solo.map(card).join("")}</div>`;
   bindGo();
 }
@@ -225,61 +225,76 @@ function needLogin(msg){
 const CODE = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const newCode = () => Array.from({length:5}, () => CODE[Math.floor(Math.random()*CODE.length)]).join("");
 const me = () => ({ uid:user.uid, name:myName(), photo:user.photoURL||"", ready:false });
+const STALE = 30 * 60 * 1000;           // phòng bỏ quên quá 30 phút thì coi như trống
+const FIXED = 3;                         // số phòng có sẵn cho mỗi game
+const ONLINE = () => Object.keys(G).filter(k => G[k].kind === "online");
+const gameOf = id => id.split("-")[0];
+const roomLabel = id => /-\d+$/.test(id) ? "Phòng " + id.split("-")[1] : "Phòng thêm " + id.split("-x")[1];
+const isFree = r => !r || !r.players || !r.players.length || Date.now() - (r.updatedAt || 0) > STALE;
+const isFull = r => !isFree(r) && (r.status !== "lobby" || r.players.length >= r.need);
+const freshRoom = game => ({ game, need: G[game].minP, host: user.uid, status: "lobby", players: [me()], memberIds: [user.uid], state: null, createdAt: Date.now(), updatedAt: Date.now() });
+
 function renderRooms(pre){
-  if (needLogin("Đăng nhập bằng Google để mở phòng và mời bạn bè.")) return;
-  const online = Object.entries(G).filter(([,g]) => g.kind==="online");
-  main.innerHTML = `<div class="sec">MỞ PHÒNG MỚI</div>
-    <div class="panel"><div class="form-row">
-      <label>Trò chơi<select id="r-game">${online.map(([k,g])=>`<option value="${k}" ${k===pre?"selected":""}>${esc(g.name)}</option>`).join("")}</select></label>
-      <label>Số người chơi<select id="r-need"></select></label>
-      <button class="btn primary" id="r-create">Mở phòng</button></div>
-      <p class="hint" id="r-desc"></p></div>
-    <div class="sec">VÀO PHÒNG CỦA BẠN BÈ</div>
-    <div class="panel"><div class="form-row"><label>Mã phòng<input id="r-code" maxlength="5" autocomplete="off" placeholder="AB3CD" style="text-transform:uppercase"></label><button class="btn primary" id="r-join">Vào phòng</button></div></div>
-    <div class="sec">PHÒNG CỦA TÔI</div><div id="r-mine" class="playlist"><p>Đang tải.</p></div>`;
-  const sync = () => { const g = G[$("#r-game").value]; $("#r-need").innerHTML = Array.from({length:g.maxP-g.minP+1},(_,i)=>g.minP+i).map(n=>`<option>${n}</option>`).join(""); $("#r-desc").textContent = g.desc; };
-  $("#r-game").onchange = sync; sync();
-  $("#r-create").onclick = async () => {
-    const game = $("#r-game").value, need = +$("#r-need").value; let code = newCode();
-    try {
-      for (let i=0;i<5;i++){ const ex = await db.collection("rooms").doc(code).get(); if (!ex.exists) break; code = newCode(); }
-      await db.collection("rooms").doc(code).set({ game, need, host:user.uid, status:"lobby", players:[me()], memberIds:[user.uid], state:null, createdAt:Date.now(), updatedAt:Date.now() });
-      go("room-"+code);
-    } catch (e) { toast("Chưa mở được phòng, thử lại."); }
-  };
-  $("#r-join").onclick = () => { const c = $("#r-code").value.trim().toUpperCase(); if (c.length === 5) go("room-"+c); else toast("Mã phòng có 5 ký tự."); };
-  db.collection("rooms").where("memberIds","array-contains",user.uid).limit(30).get().then(snap => {
-    const list = snap.docs.map(d=>({code:d.id,...d.data()})).sort((a,b)=>b.updatedAt-a.updatedAt);
-    $("#r-mine").innerHTML = list.length ? list.map(r=>`<button class="playcard" data-go="room-${r.code}"><h3>${r.code}</h3><p>${esc(G[r.game]?.name||r.game)}, ${r.players.length}/${r.need} người, ${r.status==="lobby"?"đang chờ":r.status==="playing"?"đang chơi":"đã xong"}</p></button>`).join("") : "<p>Bạn chưa vào phòng nào.</p>";
-    bindGo($("#r-mine"));
-  }).catch(() => { $("#r-mine").innerHTML = "<p>Chưa tải được danh sách phòng.</p>"; });
+  if (needLogin("Đăng nhập bằng Google để vào phòng chơi cùng bạn bè.")) return;
+  const keys = ONLINE();
+  main.innerHTML = `<div class="count"><span class="tag">PHÒNG CHƠI</span><small>Mỗi trò có sẵn ${FIXED} phòng. Khi cả ${FIXED} phòng đều đủ người, bạn mở thêm phòng mới.</small></div>` +
+    keys.map(k => `<section id="sec-${k}"><div class="sec">${esc(G[k].name.toUpperCase())}</div><p class="hint">${esc(G[k].desc)} Mỗi phòng ${G[k].minP} người.</p><div class="playlist" id="rl-${k}"><p>Đang tải phòng.</p></div></section>`).join("");
+  const draw = rooms => keys.forEach(k => {
+    const ids = Array.from({length:FIXED}, (_, i) => `${k}-${i + 1}`);
+    Object.keys(rooms).filter(id => gameOf(id) === k && !ids.includes(id) && !isFree(rooms[id])).forEach(id => ids.push(id));
+    const allFull = ids.every(id => isFull(rooms[id]));
+    $("#rl-" + k).innerHTML = ids.map(id => {
+      const r = rooms[id], free = isFree(r), mine = r && !free && r.memberIds.includes(user.uid), full = isFull(r);
+      const st = free ? "Trống" : r.status === "playing" ? "Đang chơi" : r.status === "done" ? "Vừa chơi xong" : full ? "Đủ người" : `Đang chờ ${r.players.length}/${r.need}`;
+      const who = free ? "Chưa có ai" : r.players.map(p => esc(p.name)).join(", ");
+      const btn = mine ? `<button class="lcdbtn" data-go="room-${id}">VÀO LẠI</button>` : full ? `<span class="small">KÍN CHỖ</span>` : `<button class="lcdbtn" data-go="room-${id}">VÀO PHÒNG</button>`;
+      return `<div class="playcard"><h3>${esc(roomLabel(id))}</h3><p><b>${st}</b><br>${who}</p><div class="lcdrow" style="justify-content:flex-start">${btn}</div></div>`;
+    }).join("") + `<div class="playcard"><h3>PHÒNG MỚI</h3><p>${allFull ? "Mọi phòng đều kín, bạn mở thêm một phòng." : "Còn phòng trống, mời bạn vào phòng có sẵn trước."}</p><div class="lcdrow" style="justify-content:flex-start"><button class="lcdbtn" data-new="${k}" ${allFull ? "" : "disabled"}>MỞ PHÒNG MỚI</button></div></div>`;
+    bindGo($("#rl-" + k));
+    $("#rl-" + k).querySelectorAll("[data-new]").forEach(b => b.onclick = async () => {
+      const id = `${k}-x${newCode()}`;
+      try { await db.collection("rooms").doc(id).set(freshRoom(k)); go("room-" + id); } catch (e) { toast("Chưa mở được phòng, thử lại."); }
+    });
+  });
+  roomUnsub = db.collection("rooms").where("game", "in", keys).onSnapshot(snap => {
+    const rooms = {}; snap.docs.forEach(d => rooms[d.id] = d.data()); draw(rooms);
+    if (pre && $("#sec-" + pre)) { $("#sec-" + pre).scrollIntoView(); pre = null; }
+  }, () => keys.forEach(k => { $("#rl-" + k).innerHTML = "<p>Chưa tải được danh sách phòng. Thử tải lại trang.</p>"; }));
 }
 async function txRoom(code, fn){
   const ref = db.collection("rooms").doc(code);
   return db.runTransaction(async t => { const d = await t.get(ref); if (!d.exists) throw new Error("Không tìm thấy phòng này."); const r = d.data(); const upd = fn(r); if (upd) t.update(ref, {...upd, updatedAt:Date.now()}); });
 }
+async function joinRoom(code){
+  const game = gameOf(code); if (!G[game] || G[game].kind !== "online") throw new Error("Phòng này không có trò chơi hợp lệ.");
+  const ref = db.collection("rooms").doc(code);
+  return db.runTransaction(async t => {
+    const d = await t.get(ref);
+    if (!d.exists) { if (/-\d+$/.test(code)) { t.set(ref, freshRoom(game)); return; } throw new Error("Phòng này đã đóng."); }
+    const r = d.data();
+    if (r.memberIds.includes(user.uid) && !isFree(r)) return;
+    if (isFree(r)) { t.update(ref, { ...freshRoom(game), createdAt: r.createdAt || Date.now() }); return; }
+    if (r.status !== "lobby") throw new Error("Phòng đang chơi, bạn chọn phòng khác nhé.");
+    if (r.players.length >= r.need) throw new Error("Phòng đã đủ người.");
+    t.update(ref, { players: [...r.players, me()], memberIds: [...r.memberIds, user.uid], updatedAt: Date.now() });
+  });
+}
 function renderRoom(code){
-  if (needLogin("Đăng nhập bằng Google để vào phòng " + code + ".")) return;
-  main.innerHTML = `<button class="btn back" data-go="rooms">Về phòng chơi</button><div id="room-body"><p>Đang vào phòng ${esc(code)}.</p></div>`; bindGo();
-  let joinedTried = false, lastRoom = null;
-  roomUnsub = db.collection("rooms").doc(code).onSnapshot(async d => {
-    if (!d.exists) { $("#room-body").innerHTML = `<div class="empty"><div class="tag">KHÔNG CÓ PHÒNG ${esc(code)}</div><p>Kiểm tra lại mã phòng với bạn của bạn.</p></div>`; return; }
-    const r = d.data(); lastRoom = r;
-    const inRoom = r.memberIds.includes(user.uid);
-    if (!inRoom && r.status === "lobby" && r.players.length < r.need && !joinedTried) {
-      joinedTried = true;
-      try { await txRoom(code, x => { if (x.memberIds.includes(user.uid)) return null; if (x.status !== "lobby") throw new Error("Phòng đã bắt đầu chơi."); if (x.players.length >= x.need) throw new Error("Phòng đã đủ người."); return { players:[...x.players, me()], memberIds:[...x.memberIds, user.uid] }; }); }
-      catch (e) { toast(e.message); }
-      return;
-    }
-    drawRoom(code, r);
-  }, () => { $("#room-body").innerHTML = `<div class="empty"><div class="tag">CHƯA VÀO ĐƯỢC PHÒNG</div><p>Thử tải lại trang.</p></div>`; });
+  if (needLogin("Đăng nhập bằng Google để vào phòng chơi.")) return;
+  main.innerHTML = `<button class="btn back" data-go="rooms-${esc(gameOf(code))}">Về danh sách phòng</button><div id="room-body"><p>Đang vào ${esc(roomLabel(code))}.</p></div>`; bindGo();
+  joinRoom(code).catch(e => toast(e.message)).finally(() => {
+    if (view !== "room-" + code) return;
+    roomUnsub = db.collection("rooms").doc(code).onSnapshot(d => {
+      if (!d.exists) { $("#room-body").innerHTML = `<div class="empty"><div class="tag">PHÒNG ĐÃ ĐÓNG</div><p>Quay lại danh sách để chọn phòng khác.</p></div>`; return; }
+      drawRoom(code, d.data());
+    }, () => { $("#room-body").innerHTML = `<div class="empty"><div class="tag">CHƯA VÀO ĐƯỢC PHÒNG</div><p>Thử tải lại trang.</p></div>`; });
+  });
 }
 function drawRoom(code, r){
   const g = G[r.game], seat = r.players.findIndex(p => p.uid === user.uid), host = r.host === user.uid;
   const link = location.origin + location.pathname + "#room-" + code;
   const plist = `<ul class="plist">${r.players.map((p,i)=>`<li>${p.photo?`<img src="${esc(p.photo)}" alt="">`:`<span class="av"></span>`}<span>${esc(p.name)}${p.uid===r.host?" · chủ phòng":""}</span><span class="rd ${p.ready?"on":""}">${r.status==="lobby"?(p.ready?"Sẵn sàng":"Chưa sẵn sàng"):"Ghế "+(i+1)}</span></li>`).join("")}${Array.from({length:Math.max(0,r.need-r.players.length)}).map(()=>`<li><span class="av"></span><span class="hint">Đang chờ người vào</span></li>`).join("")}</ul>`;
-  const side = `<div class="panel"><h3>PHÒNG</h3><div class="code">${esc(code)}</div><p class="hint">Gửi mã này hoặc đường link cho bạn bè.</p>
+  const side = `<div class="panel"><h3>${esc(roomLabel(code).toUpperCase())}</h3><p class="hint">Gửi đường link này cho bạn bè để vào đúng phòng.</p>
      <div class="lcdrow" style="justify-content:flex-start"><button class="btn" id="cp">Chép link mời</button></div>
      <h3 style="margin-top:14px">${r.players.length}/${r.need} NGƯỜI</h3>${plist}
      ${seat<0 && r.status!=="lobby" ? `<p class="hint">Bạn đang xem, không có ghế trong ván này.</p>` : ""}
@@ -299,7 +314,10 @@ function drawRoom(code, r){
   body.innerHTML = `<div class="room"><div>${mainCol}</div><aside>${side}</aside></div>`;
   $("#cp").onclick = () => { navigator.clipboard.writeText(link).then(()=>toast("Đã chép link mời"), ()=>toast(link)); };
   if ($("#leave")) $("#leave").onclick = async () => {
-    try { await txRoom(code, x => { const pl = x.players.filter(p => p.uid !== user.uid); if (x.status === "lobby") return { players: pl, memberIds: x.memberIds.filter(u => u !== user.uid), host: x.host === user.uid ? (pl[0]?.uid || x.host) : x.host }; return { memberIds: x.memberIds.filter(u => u !== user.uid) }; }); go("rooms"); }
+    try { await txRoom(code, x => { const pl = x.players.filter(p => p.uid !== user.uid), ids = x.memberIds.filter(u => u !== user.uid);
+      if (!pl.length) return { players: [], memberIds: [], host: "", status: "lobby", state: null };
+      return { players: pl.map(p => ({...p, ready:false})), memberIds: ids, host: x.host === user.uid ? pl[0].uid : x.host, status: "lobby", state: null }; });
+      go("rooms-" + gameOf(code)); }
     catch (e) { toast(e.message); }
   };
   if ($("#ready")) $("#ready").onclick = () => txRoom(code, x => ({ players: x.players.map(p => p.uid === user.uid ? {...p, ready:!p.ready} : p) })).catch(e=>toast(e.message));
