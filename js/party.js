@@ -42,16 +42,18 @@ function ucWin(s) {
   return null;
 }
 const CLUE_MS = 60000, TALK_MS = 300000; // 1 phút mỗi lượt gợi ý, 5 phút trao đổi
+const clueMs = s => s.clueMs || CLUE_MS, talkMs = s => s.talkMs || TALK_MS;
+const durTxt = ms => ms % 60000 === 0 ? ms / 60000 + " phút" : Math.round(ms / 1000) + " giây";
 const mmss = ms => { const t = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); };
 function ucNextClue(s) {
   s.phaseAt = Date.now();
   for (let k = s.turnIdx + 1; k < s.order.length; k++) if (s.alive[s.order[k]]) { s.turnIdx = k; return; }
   s.phase = "talk"; s.votes = {};
-  s.chat = [...(s.chat || []), { sys: 1, text: "Hết lượt gợi ý. Cả phòng có 5 phút trao đổi trước khi bỏ phiếu." }].slice(-60);
+  s.chat = [...(s.chat || []), { sys: 1, text: `Hết lượt gợi ý. Cả phòng có ${durTxt(talkMs(s))} trao đổi trước khi bỏ phiếu.` }].slice(-60);
 }
 function ucStartRound(s) {
   s.round++; s.phase = "clue"; s.turnIdx = -1; s.votes = {};
-  s.chat = [...(s.chat || []), { sys: 1, text: `Vòng ${s.round} bắt đầu. Mỗi người có 1 phút để gợi ý.` }].slice(-60);
+  s.chat = [...(s.chat || []), { sys: 1, text: `Vòng ${s.round} bắt đầu. Mỗi người có ${durTxt(clueMs(s))} để gợi ý.` }].slice(-60);
   ucNextClue(s);
 }
 function ucClue(s, seat, text, auto) {
@@ -69,7 +71,7 @@ function ucTally(s) {
   if (s.roles[out] === "trang") { s.phase = "guess"; s.guessSeat = out; s.phaseAt = Date.now(); return; }
   s.winner = ucWin(s); if (!s.winner) ucStartRound(s);
 }
-const ucLimit = s => s.phase === "clue" ? CLUE_MS : s.phase === "talk" ? TALK_MS : 0;
+const ucLimit = s => s.phase === "clue" ? clueMs(s) : s.phase === "talk" ? talkMs(s) : 0;
 G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ trắng mũ đen",
   desc: "Cả phòng nhận cùng một từ khóa, Mũ đen nhận từ gần giống, Mũ trắng không có từ. Mỗi người có 1 phút gợi ý, cả phòng trao đổi 5 phút rồi bỏ phiếu loại một người.",
   init(players) {
@@ -78,7 +80,7 @@ G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ tr�
     let order = shuffle([...Array(n).keys()]);
     if (roles[order[0]] === "trang") order.push(order.shift());
     const s = { names: players.map((p, i) => p.name || "Người chơi " + (i + 1)), roles, words: { dan: pair[flip], den: pair[1 - flip] }, alive: Array(n).fill(true),
-      order, turnIdx: -1, round: 0, phase: "clue", clues: [], votes: {}, guessSeat: -1, guess: "", log: [], chat: [], winner: null, phaseAt: Date.now() };
+      clueMs: CLUE_MS, talkMs: TALK_MS, order, turnIdx: -1, round: 0, phase: "clue", clues: [], votes: {}, guessSeat: -1, guess: "", log: [], chat: [], winner: null, phaseAt: Date.now() };
     ucStartRound(s); return s;
   },
   move(s0, mv, seat) {
@@ -90,7 +92,7 @@ G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ tr�
     }
     if (mv.t === "timeout") { // máy nào thấy hết giờ trước thì báo, các máy khác bị bỏ qua lặng lẽ
       const late = Date.now() - (s.phaseAt || 0) >= ucLimit(s) - 1500;
-      if (s.phase === "clue" && mv.turn === s.turnIdx && late) { ucClue(s, s.order[s.turnIdx], "Hết 1 phút, không gợi ý", true); return s; }
+      if (s.phase === "clue" && mv.turn === s.turnIdx && late) { ucClue(s, s.order[s.turnIdx], `Hết ${durTxt(clueMs(s))}, không gợi ý`, true); return s; }
       if (s.phase === "talk" && mv.round === s.round && late) { s.phase = "vote"; s.votes = {}; s.phaseAt = Date.now(); s.chat = [...s.chat, { sys: 1, text: "Hết giờ trao đổi. Mời cả phòng bỏ phiếu." }].slice(-60); return s; }
       fail("");
     }
@@ -136,7 +138,7 @@ G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ tr�
     const limit = ucLimit(s), timer = limit && !over ? `<span id="uc-cd">${mmss(limit - (Date.now() - s.phaseAt))}</span>` : "";
     let act = "";
     if (over) act = `<div class="msg">${esc(s.winner)} thắng. Từ của Dân thường là ${esc(s.words.dan)}, từ của Mũ đen là ${esc(s.words.den)}.</div>`;
-    else if (s.phase === "clue") act = sp === me ? `<div class="msg">Tới lượt bạn. Gõ một câu gợi ý trong 1 phút.</div><form class="chatform" id="uc-clue"><input maxlength="60" placeholder="Một câu gợi ý, không nói thẳng từ khóa" aria-label="Gợi ý" autocomplete="off"><button class="lcdbtn">GỬI GỢI Ý</button></form>` : `<div class="msg">Tới lượt ${esc(s.names[sp])} gợi ý, còn ${timer || "vài giây"}.</div>`;
+    else if (s.phase === "clue") act = sp === me ? `<div class="msg">Tới lượt bạn. Gõ một câu gợi ý trong ${durTxt(clueMs(s))}.</div><form class="chatform" id="uc-clue"><input maxlength="60" placeholder="Một câu gợi ý, không nói thẳng từ khóa" aria-label="Gợi ý" autocomplete="off"><button class="lcdbtn">GỬI GỢI Ý</button></form>` : `<div class="msg">Tới lượt ${esc(s.names[sp])} gợi ý, còn ${timer || "vài giây"}.</div>`;
     else if (s.phase === "talk") act = `<div class="msg">Cả phòng trao đổi trong khung chat, còn ${timer}. Hết giờ sẽ tự mở bỏ phiếu.</div>${alive ? `<div class="lcdrow"><button class="lcdbtn" data-skip="1">BỎ PHIẾU LUÔN</button></div>` : ""}`;
     else if (s.phase === "vote") act = alive ? (s.votes[me] !== undefined ? `<div class="msg">Bạn đã bỏ phiếu, chờ mọi người.</div>` : `<div class="msg">Bỏ phiếu loại một người khả nghi.</div><div class="lcdrow">${s.alive.map((a, i) => a && i !== me ? `<button class="lcdbtn" data-vote="${i}">${esc(s.names[i])}</button>` : "").join("")}<button class="lcdbtn" data-vote="-1">KHÔNG BẦU</button></div>`) : `<div class="msg">Mọi người đang bỏ phiếu.</div>`;
     else if (s.phase === "guess") act = me === s.guessSeat ? `<div class="msg">Bạn là Mũ trắng và vừa bị loại. Đoán từ khóa của Dân thường để thắng.</div><form class="chatform" id="uc-guess"><input maxlength="40" placeholder="Từ khóa của Dân thường" aria-label="Đoán từ khóa"><button class="lcdbtn">ĐOÁN</button></form>` : `<div class="msg">${esc(s.names[s.guessSeat])} là Mũ trắng, đang đoán từ khóa của Dân thường.</div>`;

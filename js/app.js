@@ -1,5 +1,18 @@
 (() => {
-const APP_V = 8; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
+const APP_V = 9; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
+// Tự lấy bản mới: GitHub giữ bản cũ trong bộ nhớ đệm khoảng 10 phút, nên trang tự hỏi số phiên bản mới nhất.
+async function checkVersion(){
+  try {
+    const v = (await (await fetch("version.json?t=" + Date.now(), { cache: "no-store" })).json()).v;
+    if (v > APP_V) {
+      let tried = ""; try { tried = sessionStorage.getItem("tlc-reload") || ""; } catch (e) {}
+      if (tried === String(v)) return;
+      try { sessionStorage.setItem("tlc-reload", String(v)); } catch (e) {}
+      location.replace(location.pathname + "?v=" + v + location.hash);
+    }
+  } catch (e) {}
+}
+checkVersion(); setInterval(checkVersion, 60000);
 const G = window.TLC_GAMES, { esc } = window.TLC_HELPERS;
 const SEASONS = {1:{name:"Mùa 1",long:"Devil's Plan mùa 1",c:"var(--s1)"},2:{name:"Mùa 2",long:"Devil's Plan mùa 2",c:"var(--s2)"},3:{name:"Mùa 3",long:"Devil's Plan mùa 3",c:"var(--s3)"},0:{name:"Boardgame khác",long:"Boardgame khác",c:"var(--s0)"}};
 const TYPES = {main:"Trận chính",prison:"Trận trong tù",prize:"Trận giải thưởng",exile:"Vùng lưu đày",final:"Chung kết",hidden:"Thử thách ẩn",other:"Boardgame"};
@@ -365,7 +378,7 @@ function drawRoom(code, r){
   if (r.status !== "lobby" && g) {
     const el = $("#screen"); el._sel = keepSel;
     g.view(el, { state:r.state, seat, players:r.players, hotseat:false,
-      send(mv){ txRoom(code, x => { if (x.status !== "playing") throw new Error("Ván chưa bắt đầu."); const s = G[x.game].move(x.state, mv, x.players.findIndex(p=>p.uid===user.uid)); return { state:s, status: s.winner !== null && s.winner !== undefined ? "done" : "playing", appV: Math.max(x.appV || 0, APP_V) }; }).catch(e=>{ if (e.message) toast(e.message); }); } });
+      send(mv){ txRoom(code, x => { if ((x.appV || 0) > APP_V) throw new Error("Trang có bản mới. Tải lại trang để chơi tiếp cùng cả phòng."); if (x.status !== "playing") throw new Error("Ván chưa bắt đầu."); const s = G[x.game].move(x.state, mv, x.players.findIndex(p=>p.uid===user.uid)); return { state:s, status: s.winner !== null && s.winner !== undefined ? "done" : "playing", appV: Math.max(x.appV || 0, APP_V) }; }).catch(e=>{ if (e.message) toast(e.message); }); } });
   }
 }
 
