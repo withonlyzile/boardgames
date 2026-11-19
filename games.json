@@ -1110,5 +1110,91 @@
   "order": 36,
   "players": "3",
   "source": "The Devil's Plan"
+ },
+ {
+  "name": "Mũ trắng mũ đen",
+  "nameEn": "Ai là gián điệp",
+  "season": 0,
+  "type": "other",
+  "body": [
+   {
+    "t": "p",
+    "x": "Trò có ba phe. Dân thường chiếm đa số và cùng nhận một từ khóa. Mũ đen nhận một từ gần giống, còn Mũ trắng không nhận từ nào."
+   },
+   {
+    "t": "p",
+    "x": "Không ai biết mình thuộc phe nào, chỉ biết từ khóa của mình. Ví dụ Dân thường nhận cà phê thì Mũ đen có thể nhận trà sữa."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi vòng, từng người lần lượt nói một câu gợi ý về từ khóa của mình. Câu gợi ý không được chứa thẳng từ khóa. Mũ trắng phải nghe người khác rồi nói theo cho khéo."
+   },
+   {
+    "t": "p",
+    "x": "Nói xong, cả nhóm bỏ phiếu loại một người khả nghi. Người bị loại lộ vai, phiếu hòa thì không ai bị loại."
+   },
+   {
+    "t": "p",
+    "x": "Nếu Mũ trắng bị loại, người đó được đoán từ khóa của Dân thường. Đoán đúng thì Mũ trắng thắng ngay."
+   },
+   {
+    "t": "p",
+    "x": "Dân thường thắng khi loại hết Mũ đen và Mũ trắng. Mũ đen và Mũ trắng thắng khi số người của họ bằng hoặc nhiều hơn số Dân thường còn lại."
+   },
+   {
+    "t": "p",
+    "x": "Trên web, mỗi phòng có từ 4 đến 12 người. Trang tự chia vai, phát từ khóa từ hơn 80 cặp từ và đếm phiếu."
+   }
+  ],
+  "meta": "Trò chơi nhóm suy luận, từ 4 đến 12 người.",
+  "source": "Trò chơi nhóm",
+  "id": "s0-mu-trang-mu-den",
+  "num": "0.1",
+  "players": "4 đến 12",
+  "order": 1,
+  "playable": [
+   "whitehat"
+  ]
+ },
+ {
+  "name": "Ma sói",
+  "nameEn": "Werewolf",
+  "season": 0,
+  "type": "other",
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi người nhận một vai bí mật. Phe sói có một đến ba Ma sói tùy số người. Phe làng gồm Tiên tri, Bảo vệ, Phù thủy và Dân làng."
+   },
+   {
+    "t": "p",
+    "x": "Ban đêm, Ma sói cùng chọn một người để cắn. Tiên tri soi một người để biết có phải sói không. Bảo vệ che chở một người, không được che cùng một người hai đêm liền."
+   },
+   {
+    "t": "p",
+    "x": "Phù thủy có một bình cứu và một bình độc, mỗi bình dùng một lần trong cả ván. Phù thủy chỉ có khi phòng từ 7 người trở lên."
+   },
+   {
+    "t": "p",
+    "x": "Ban ngày, cả làng biết ai chết trong đêm rồi thảo luận. Mọi người bỏ phiếu treo một người, phiếu hòa thì không ai bị treo."
+   },
+   {
+    "t": "p",
+    "x": "Dân làng thắng khi hết Ma sói. Ma sói thắng khi số sói bằng hoặc nhiều hơn số người còn lại."
+   },
+   {
+    "t": "p",
+    "x": "Trên web, trang làm quản trò, tự chia vai và gọi ngày đêm. Ai chờ quá 2 phút thì người khác bấm được nút cho ván chạy tiếp."
+   }
+  ],
+  "meta": "Trò chơi nhóm suy luận, từ 5 đến 12 người.",
+  "source": "Trò chơi nhóm",
+  "id": "s0-ma-soi",
+  "num": "0.2",
+  "players": "5 đến 12",
+  "order": 2,
+  "playable": [
+   "werewolf"
+  ]
  }
 ]

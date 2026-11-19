@@ -220,3 +220,19 @@ footer .torn{background:var(--paper-2);transform:scaleY(-1);margin:0 -28px 10px;
 .sbox{width:100%;text-align:center;color:#fff;font-weight:700;padding:14px 4px;border:3px solid var(--ink)}
 .st-r .sbox{background:var(--s1)}.st-g .sbox{background:var(--s3)}.st-b .sbox{background:#4a72c0}
 .stot{font-family:var(--pixel);font-size:24px}
+
+/* trò chơi nhóm */
+.party{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:10px 0}
+.rolecard{border:3px solid var(--lcd-ink);background:#fbfbf4;padding:12px;text-align:center}
+.rolecard .big{font-family:var(--pixel);font-size:40px;line-height:1;margin:6px 0}
+.rolecard.trang,.rolecard.ww-tientri{background:#ffffff}.rolecard.den,.rolecard.ww-soi{background:#2b2f45;color:#f4f7e8}
+.rolecard.den .hint,.rolecard.ww-soi .hint,.rolecard.den .small,.rolecard.ww-soi .small{color:#d9e3c3}
+.plist li.dead{opacity:.5;text-decoration:line-through}
+.sec2{font-family:var(--pixel);font-size:22px;margin-top:10px}
+.clues{background:#eef3df;border:2px solid var(--lcd-ink);padding:8px;min-height:40px}
+.chat{margin-top:12px;border-top:2px dashed var(--lcd-ink);padding-top:8px}
+.chatlog{max-height:180px;overflow-y:auto;font-size:14px;text-align:left}
+.chatform{display:flex;gap:8px;margin-top:8px;justify-content:center;flex-wrap:wrap}
+.chatform input{flex:1 1 200px;min-width:0;border:2px solid var(--lcd-ink);background:#fbfbf4;padding:6px 8px;font-size:15px}
+details{margin-top:8px;font-size:14px}
+@media (max-width:760px){.party{grid-template-columns:1fr}}

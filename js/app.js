@@ -22,7 +22,7 @@ if (window.TLC_FIREBASE && window.firebase) {
     auth.onAuthStateChanged(async u => {
       user = u; isAdmin = false;
       if (u) { try { const a = await db.collection("admins").doc(u.uid).get(); isAdmin = a.exists; } catch (e) {} }
-      renderWho(); route();
+      renderWho(); if (isAdmin) mergeGames(); route();
     });
   } catch (e) { console.error(e); fb = null; }
 }
@@ -51,14 +51,27 @@ const myName = () => (user && (user.displayName || (user.email || "").split("@")
 /* ---------- data ---------- */
 const EXTRA_PLAY = { "s2-equation-pyramid": ["pyramidrace"] };
 const withExtra = g => EXTRA_PLAY[g.id] ? { ...g, playable: [...new Set([...(g.playable || []), ...EXTRA_PLAY[g.id]])] } : g;
+let builtIn = [], storeGames = null, upserting = false;
+function mergeGames(){
+  if (!storeGames) { games = builtIn.map(withExtra); return; }
+  const have = new Set(storeGames.map(g => g.id));
+  games = [...storeGames, ...builtIn.filter(g => !have.has(g.id))].map(withExtra);
+  // Quản trị viên đăng nhập thì tự thêm vào kho những game mới có trong bản cài sẵn.
+  const missing = builtIn.filter(g => !have.has(g.id));
+  if (isAdmin && db && missing.length && !upserting) {
+    upserting = true; const b = db.batch();
+    missing.forEach(g => { const {id, ...d} = g; b.set(db.collection("games").doc(id), {...d, updatedAt: new Date().toISOString()}); });
+    b.commit().catch(() => {}).finally(() => { upserting = false; });
+  }
+}
 async function loadGames(){
   if (db) {
     db.collection("games").onSnapshot(snap => {
-      if (snap.empty) { if (!fromStore) return; }
-      if (!snap.empty) { games = snap.docs.map(d => withExtra({id:d.id, ...d.data()})); fromStore = true; loaded = true; refresh(); }
+      if (snap.empty) return;
+      storeGames = snap.docs.map(d => ({id:d.id, ...d.data()})); fromStore = true; loaded = true; mergeGames(); refresh();
     }, () => {});
   }
-  try { const r = await fetch("games.json", {cache:"no-cache"}); const j = await r.json(); if (!fromStore) { games = j.map(withExtra); loaded = true; refresh(); } }
+  try { const r = await fetch("games.json", {cache:"no-cache"}); builtIn = await r.json(); mergeGames(); loaded = true; refresh(); }
   catch (e) { loaded = true; refresh(); }
 }
 function refresh(){ if (view === "" || view === "all") renderResults(); else if (!view.startsWith("play-") && !view.startsWith("local-") && !view.startsWith("room-") && !view.startsWith("score-")) route(); }
