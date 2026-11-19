@@ -17,7 +17,7 @@ function armStale(el, s, redraw) { // vẽ lại đúng lúc đủ 2 phút để
 const nm = (ctx, i) => esc(ctx.players[i]?.name || "Người chơi " + (i + 1));
 function chatBox(s, ctx, can) {
   const list = (s.chat || []).slice(-30).map(m => m.sys || m.seat === undefined ? `<div class="sys"><b>Quản trò</b> ${esc(m.text)}</div>` : `<div><b>${nm(ctx, m.seat)}</b> ${esc(m.text)}</div>`).join("");
-  return `<div class="chat"><div class="chatlog">${list || '<span class="hint">Chưa có tin nhắn.</span>'}</div>${can ? `<form class="chatform"><input maxlength="120" placeholder="Nhắn cho cả phòng" aria-label="Tin nhắn"><button class="lcdbtn">GỬI</button></form>` : ""}</div>`;
+  return `<div class="chat"><div class="chatlog">${list || '<span class="hint">Chưa có tin nhắn.</span>'}</div>${can ? `<form class="chatform"><input id="chat-in" maxlength="120" placeholder="Nhắn cho cả phòng" aria-label="Tin nhắn" autocomplete="off" enterkeyhint="send"><button class="lcdbtn">GỬI</button></form>` : ""}</div>`;
 }
 function bindChat(el, ctx) {
   const f = el.querySelector(".chatform"); if (!f) return;
@@ -138,22 +138,22 @@ G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ tr�
     const limit = ucLimit(s), timer = limit && !over ? `<span id="uc-cd">${mmss(limit - (Date.now() - s.phaseAt))}</span>` : "";
     let act = "";
     if (over) act = `<div class="msg">${esc(s.winner)} thắng. Từ của Dân thường là ${esc(s.words.dan)}, từ của Mũ đen là ${esc(s.words.den)}.</div>`;
-    else if (s.phase === "clue") act = sp === me ? `<div class="msg">Tới lượt bạn. Gõ một câu gợi ý trong ${durTxt(clueMs(s))}.</div><form class="chatform" id="uc-clue"><input maxlength="60" placeholder="Một câu gợi ý, không nói thẳng từ khóa" aria-label="Gợi ý" autocomplete="off"><button class="lcdbtn">GỬI GỢI Ý</button></form>` : `<div class="msg">Tới lượt ${esc(s.names[sp])} gợi ý, còn ${timer || "vài giây"}.</div>`;
+    else if (s.phase === "clue") act = sp === me ? `<div class="msg">Tới lượt bạn. Gõ một câu gợi ý trong ${durTxt(clueMs(s))}.</div><form class="chatform" id="uc-clue"><input id="uc-clue-in" enterkeyhint="send" maxlength="60" placeholder="Một câu gợi ý, không nói thẳng từ khóa" aria-label="Gợi ý" autocomplete="off"><button class="lcdbtn">GỬI GỢI Ý</button></form>` : `<div class="msg">Tới lượt ${esc(s.names[sp])} gợi ý, còn ${timer || "vài giây"}.</div>`;
     else if (s.phase === "talk") act = `<div class="msg">Cả phòng trao đổi trong khung chat, còn ${timer}. Hết giờ sẽ tự mở bỏ phiếu.</div>${alive ? `<div class="lcdrow"><button class="lcdbtn" data-skip="1">BỎ PHIẾU LUÔN</button></div>` : ""}`;
     else if (s.phase === "vote") act = alive ? (s.votes[me] !== undefined ? `<div class="msg">Bạn đã bỏ phiếu, chờ mọi người.</div>` : `<div class="msg">Bỏ phiếu loại một người khả nghi.</div><div class="lcdrow">${s.alive.map((a, i) => a && i !== me ? `<button class="lcdbtn" data-vote="${i}">${esc(s.names[i])}</button>` : "").join("")}<button class="lcdbtn" data-vote="-1">KHÔNG BẦU</button></div>`) : `<div class="msg">Mọi người đang bỏ phiếu.</div>`;
-    else if (s.phase === "guess") act = me === s.guessSeat ? `<div class="msg">Bạn là Mũ trắng và vừa bị loại. Đoán từ khóa của Dân thường để thắng.</div><form class="chatform" id="uc-guess"><input maxlength="40" placeholder="Từ khóa của Dân thường" aria-label="Đoán từ khóa"><button class="lcdbtn">ĐOÁN</button></form>` : `<div class="msg">${esc(s.names[s.guessSeat])} là Mũ trắng, đang đoán từ khóa của Dân thường.</div>`;
+    else if (s.phase === "guess") act = me === s.guessSeat ? `<div class="msg">Bạn là Mũ trắng và vừa bị loại. Đoán từ khóa của Dân thường để thắng.</div><form class="chatform" id="uc-guess"><input id="uc-guess-in" enterkeyhint="send" autocomplete="off" maxlength="40" placeholder="Từ khóa của Dân thường" aria-label="Đoán từ khóa"><button class="lcdbtn">ĐOÁN</button></form>` : `<div class="msg">${esc(s.names[s.guessSeat])} là Mũ trắng, đang đoán từ khóa của Dân thường.</div>`;
     const msgs = (s.chat || []).slice(-40).map(m => m.sys || m.seat === undefined ? `<div class="sys"><b>Quản trò</b> ${esc(m.text)}</div>` : m.clue ? `<div class="clue${m.auto ? " auto" : ""}"><b>${nm(ctx, m.seat)}</b> gợi ý: ${esc(m.text)}</div>` : `<div><b>${nm(ctx, m.seat)}</b> ${esc(m.text)}</div>`).join("");
     const canChat = alive && !over && (s.phase === "talk" || s.phase === "vote");
     const phaseName = over ? "KẾT THÚC" : { clue: "GỢI Ý", talk: "TRAO ĐỔI", vote: "BỎ PHIẾU", guess: "MŨ TRẮNG ĐOÁN" }[s.phase];
     el.innerHTML = `<div class="score"><span>VÒNG ${s.round}</span><span>${phaseName}</span><span>${timer}</span></div>
       <div class="party">${card}<div>${people}</div></div>
       <div class="chat main"><div class="chatlog">${msgs || '<span class="hint">Chưa có tin nhắn.</span>'}</div>
-      ${canChat ? `<form class="chatform" id="uc-chat"><input maxlength="120" placeholder="Nhắn cho cả phòng" aria-label="Tin nhắn" autocomplete="off"><button class="lcdbtn">GỬI</button></form>` : ""}</div>
+      ${canChat ? `<form class="chatform" id="uc-chat"><input id="uc-chat-in" enterkeyhint="send" maxlength="120" placeholder="Nhắn cho cả phòng" aria-label="Tin nhắn" autocomplete="off"><button class="lcdbtn">GỬI</button></form>` : ""}</div>
       ${act}${!over && (s.phase === "vote" || s.phase === "guess") ? `<div class="lcdrow">${staleBtn(s)}</div>` : ""}
       <div class="log">${s.log.slice(0, 6).map(esc).join("<br>")}</div>`;
     const log = el.querySelector(".chatlog"); if (log) log.scrollTop = log.scrollHeight;
-    const cf = el.querySelector("#uc-clue"); if (cf) { cf.onsubmit = e => { e.preventDefault(); ctx.send({ text: cf.querySelector("input").value }); }; cf.querySelector("input").focus(); }
-    const ch = el.querySelector("#uc-chat"); if (ch) ch.onsubmit = e => { e.preventDefault(); const i = ch.querySelector("input"); if (i.value.trim()) ctx.send({ t: "chat", text: i.value }); i.value = ""; };
+    const cf = el.querySelector("#uc-clue"); if (cf) { cf.onsubmit = e => { e.preventDefault(); ctx.send({ text: cf.querySelector("input").value }); }; const fk = s.round + ":" + s.turnIdx; if (el._focused !== fk) { el._focused = fk; cf.querySelector("input").focus({ preventScroll: true }); } }
+    const ch = el.querySelector("#uc-chat"); if (ch) ch.onsubmit = e => { e.preventDefault(); const i = ch.querySelector("input"); if (i.value.trim()) ctx.send({ t: "chat", text: i.value }); i.value = ""; i.focus({ preventScroll: true }); };
     const gf = el.querySelector("#uc-guess"); if (gf) gf.onsubmit = e => { e.preventDefault(); ctx.send({ text: gf.querySelector("input").value }); };
     el.querySelectorAll("[data-vote]").forEach(b => b.onclick = () => ctx.send({ target: +b.dataset.vote }));
     el.querySelectorAll("[data-skip]").forEach(b => b.onclick = () => ctx.send({ t: "skiptalk" }));

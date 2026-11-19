@@ -1,5 +1,5 @@
 (() => {
-const APP_V = 9; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
+const APP_V = 10; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
 // Tự lấy bản mới: GitHub giữ bản cũ trong bộ nhớ đệm khoảng 10 phút, nên trang tự hỏi số phiên bản mới nhất.
 async function checkVersion(){
   try {
@@ -356,7 +356,9 @@ function drawRoom(code, r){
     mainCol = `<div class="console"><div class="top"><span>${esc((g?.name||"").toUpperCase())}</span><span>${ruleLinks(r.game)}</span></div><div class="screen" id="screen"></div>
       ${host?`<div class="lcdrow"><button class="lcdbtn" id="rematch">VÁN MỚI CÙNG NHÓM</button></div>`:""}</div>`;
   }
-  const body = $("#room-body"); const keepSel = $("#screen") ? $("#screen")._sel : null;
+  const body = $("#room-body"), oldScreen = $("#screen"), scrollY = window.scrollY;
+  // Giữ chữ đang gõ, con trỏ và vị trí cuộn khi phòng có thay đổi, để điện thoại không bị nhảy chữ hay mất tin nhắn.
+  const typed = [...body.querySelectorAll("input[id], textarea[id]")].map(i => ({ id: i.id, v: i.value, f: document.activeElement === i, a: i.selectionStart, b: i.selectionEnd }));
   const stale = (r.appV || 0) > APP_V ? `<div class="newver">Trang vừa có bản mới, máy bạn đang chạy bản cũ nên có thể chơi lệch với cả phòng. <button class="btn" id="reload">Tải lại trang</button></div>` : "";
   body.innerHTML = `${stale}<div class="room"><div>${mainCol}</div><aside>${side}</aside></div>`;
   if ($("#reload")) $("#reload").onclick = () => location.reload();
@@ -376,10 +378,13 @@ function drawRoom(code, r){
   }).catch(e=>toast(e.message));
   if ($("#rematch")) $("#rematch").onclick = () => txRoom(code, x => ({ state: G[x.game].init(x.players), status:"playing", appV: Math.max(x.appV || 0, APP_V) })).catch(e=>toast(e.message));
   if (r.status !== "lobby" && g) {
-    const el = $("#screen"); el._sel = keepSel;
+    let el = $("#screen");
+    if (oldScreen && oldScreen !== el) { el.replaceWith(oldScreen); el = oldScreen; } // giữ nguyên khung màn hình để đồng hồ và lựa chọn không bị đặt lại
     g.view(el, { state:r.state, seat, players:r.players, hotseat:false,
       send(mv){ txRoom(code, x => { if ((x.appV || 0) > APP_V) throw new Error("Trang có bản mới. Tải lại trang để chơi tiếp cùng cả phòng."); if (x.status !== "playing") throw new Error("Ván chưa bắt đầu."); const s = G[x.game].move(x.state, mv, x.players.findIndex(p=>p.uid===user.uid)); return { state:s, status: s.winner !== null && s.winner !== undefined ? "done" : "playing", appV: Math.max(x.appV || 0, APP_V) }; }).catch(e=>{ if (e.message) toast(e.message); }); } });
   }
+  typed.forEach(k => { const n = document.getElementById(k.id); if (!n) return; if (!n.value) n.value = k.v; if (k.f) { n.focus({ preventScroll: true }); try { n.setSelectionRange(k.a, k.b); } catch (e) {} } });
+  if (Math.abs(window.scrollY - scrollY) > 2) window.scrollTo(0, scrollY);
 }
 
 /* ---------- header sprites ---------- */

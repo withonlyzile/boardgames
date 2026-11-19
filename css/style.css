@@ -245,3 +245,14 @@ details{margin-top:8px;font-size:14px}
 .plist li.speaking{outline:3px solid var(--btn);outline-offset:-3px}
 .chatlog .sys{color:var(--lcd-ink);font-size:13px}.chatlog .sys b{color:var(--btn)}
 .newver{background:var(--btn);color:#fff;padding:10px 14px;margin:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:600}
+
+/* điện thoại: chữ trong ô nhập từ 16px để iPhone không tự phóng to */
+input,select,textarea,.lcdinput,.chatform input,.form-row input,form.ed input,form.ed textarea{font-size:16px}
+.chatform input{font-family:var(--body)}
+@media (max-width:760px){
+  .party .plist{display:flex;flex-wrap:wrap;gap:6px}
+  .party .plist li{padding:3px 8px;font-size:14px;gap:6px}
+  .party .plist .rd{margin-left:0}
+  .rolecard .big{font-size:32px}
+  .chat.main .chatlog{max-height:45vh}
+}
