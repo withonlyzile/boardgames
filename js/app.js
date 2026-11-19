@@ -1,5 +1,5 @@
 (() => {
-const APP_V = 10; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
+const APP_V = 11; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
 // Tự lấy bản mới: GitHub giữ bản cũ trong bộ nhớ đệm khoảng 10 phút, nên trang tự hỏi số phiên bản mới nhất.
 async function checkVersion(){
   try {
@@ -336,6 +336,7 @@ function renderRoom(code){
     }, () => { $("#room-body").innerHTML = `<div class="empty"><div class="tag">CHƯA VÀO ĐƯỢC PHÒNG</div><p>Thử tải lại trang.</p></div>`; });
   });
 }
+let rmAsk = null;
 function drawRoom(code, r){
   const g = G[r.game], seat = r.players.findIndex(p => p.uid === user.uid), host = r.host === user.uid;
   const link = location.origin + location.pathname + "#room-" + code;
@@ -353,8 +354,8 @@ function drawRoom(code, r){
       <div class="lcdrow" style="justify-content:flex-start">${seat>=0?`<button class="btn" id="ready">${r.players[seat].ready?"Bỏ sẵn sàng":"Sẵn sàng"}</button>`:""}
       ${host?`<button class="btn primary" id="start" ${allReady?"":"disabled"}>Bắt đầu chơi</button>`:`<span class="hint">Chủ phòng sẽ bấm bắt đầu khi đủ người.</span>`}</div></div>`;
   } else {
-    mainCol = `<div class="console"><div class="top"><span>${esc((g?.name||"").toUpperCase())}</span><span>${ruleLinks(r.game)}</span></div><div class="screen" id="screen"></div>
-      ${host?`<div class="lcdrow"><button class="lcdbtn" id="rematch">VÁN MỚI CÙNG NHÓM</button></div>`:""}</div>`;
+    mainCol = `<div class="console"><div class="top"><span>${esc((g?.name||"").toUpperCase())}</span><span>${ruleLinks(r.game)}</span></div>
+      ${host?`<div class="lcdrow" style="justify-content:flex-end;margin:0 0 8px">${rmAsk === code ? `<span class="hint">Bỏ ván đang chơi và chia ván mới?</span> <button class="lcdbtn" id="rm-yes">CHIA VÁN MỚI</button> <button class="lcdbtn" id="rm-no">GIỮ VÁN NÀY</button>` : `<button class="lcdbtn" id="rematch">VÁN MỚI CÙNG NHÓM</button>`}</div>`:""}<div class="screen" id="screen"></div></div>`;
   }
   const body = $("#room-body"), oldScreen = $("#screen"), scrollY = window.scrollY;
   // Giữ chữ đang gõ, con trỏ và vị trí cuộn khi phòng có thay đổi, để điện thoại không bị nhảy chữ hay mất tin nhắn.
@@ -376,12 +377,15 @@ function drawRoom(code, r){
     if (!x.players.every(p => p.ready)) throw new Error("Còn người chưa sẵn sàng.");
     return { status:"playing", state: G[x.game].init(x.players), appV: Math.max(x.appV || 0, APP_V) };
   }).catch(e=>toast(e.message));
-  if ($("#rematch")) $("#rematch").onclick = () => txRoom(code, x => ({ state: G[x.game].init(x.players), status:"playing", appV: Math.max(x.appV || 0, APP_V) })).catch(e=>toast(e.message));
+  // Ván mới cần bấm hai lần (hỏi lại) để không lỡ tay bỏ ván đang chơi.
+  if ($("#rematch")) $("#rematch").onclick = () => { rmAsk = code; drawRoom(code, r); };
+  if ($("#rm-no")) $("#rm-no").onclick = () => { rmAsk = null; drawRoom(code, r); };
+  if ($("#rm-yes")) $("#rm-yes").onclick = () => { rmAsk = null; txRoom(code, x => ({ state: G[x.game].init(x.players), status:"playing", appV: Math.max(x.appV || 0, APP_V) })).catch(e=>toast(e.message)); };
   if (r.status !== "lobby" && g) {
     let el = $("#screen");
     if (oldScreen && oldScreen !== el) { el.replaceWith(oldScreen); el = oldScreen; } // giữ nguyên khung màn hình để đồng hồ và lựa chọn không bị đặt lại
-    g.view(el, { state:r.state, seat, players:r.players, hotseat:false,
-      send(mv){ txRoom(code, x => { if ((x.appV || 0) > APP_V) throw new Error("Trang có bản mới. Tải lại trang để chơi tiếp cùng cả phòng."); if (x.status !== "playing") throw new Error("Ván chưa bắt đầu."); const s = G[x.game].move(x.state, mv, x.players.findIndex(p=>p.uid===user.uid)); return { state:s, status: s.winner !== null && s.winner !== undefined ? "done" : "playing", appV: Math.max(x.appV || 0, APP_V) }; }).catch(e=>{ if (e.message) toast(e.message); }); } });
+    g.view(el, { state:r.state, seat, players:r.players, hotseat:false, isHost: host,
+      send(mv){ txRoom(code, x => { if ((x.appV || 0) > APP_V) throw new Error("Trang có bản mới. Tải lại trang để chơi tiếp cùng cả phòng."); if (x.status !== "playing") throw new Error("Ván chưa bắt đầu."); const s = G[x.game].move(x.state, mv, x.players.findIndex(p=>p.uid===user.uid), { hostSeat: x.players.findIndex(p=>p.uid===x.host) }); return { state:s, status: s.winner !== null && s.winner !== undefined ? "done" : "playing", appV: Math.max(x.appV || 0, APP_V) }; }).catch(e=>{ if (e.message) toast(e.message); }); } });
   }
   typed.forEach(k => { const n = document.getElementById(k.id); if (!n) return; if (!n.value) n.value = k.v; if (k.f) { n.focus({ preventScroll: true }); try { n.setSelectionRange(k.a, k.b); } catch (e) {} } });
   if (Math.abs(window.scrollY - scrollY) > 2) window.scrollTo(0, scrollY);
