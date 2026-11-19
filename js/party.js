@@ -9,6 +9,11 @@ const rnd = n => Math.floor(Math.random() * n);
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const STALE_MS = 120000; // sau 2 phút ai cũng bấm được nút cho ván chạy tiếp
+function armStale(el, s, redraw) { // vẽ lại đúng lúc đủ 2 phút để nút cho ván chạy tiếp tự hiện
+  clearTimeout(el._staleT);
+  const left = STALE_MS - (Date.now() - (s.phaseAt || 0));
+  if (!s.winner && left > 0) el._staleT = setTimeout(() => { if (el.isConnected) redraw(); }, left + 500);
+}
 const nm = (ctx, i) => esc(ctx.players[i]?.name || "Người chơi " + (i + 1));
 function chatBox(s, ctx, can) {
   const list = (s.chat || []).slice(-30).map(m => `<div><b>${nm(ctx, m.seat)}</b> ${esc(m.text)}</div>`).join("");
@@ -108,7 +113,7 @@ G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ tr�
     if (over) act = `<div class="msg">${esc(s.winner)} thắng. Từ của Dân thường là ${esc(s.words.dan)}, từ của Mũ đen là ${esc(s.words.den)}.</div>`;
     else if (s.phase === "clue") {
       const sp = s.order[s.turnIdx];
-      act = sp === me ? `<form class="chatform" id="uc-clue"><input maxlength="60" placeholder="Một câu gợi ý, không nói thẳng từ khóa" aria-label="Gợi ý"><button class="lcdbtn">GỬI GỢI Ý</button></form>` : `<div class="msg">${esc(s.names[sp])} đang nghĩ gợi ý.</div>`;
+      act = sp === me ? `<form class="chatform" id="uc-clue"><input maxlength="60" placeholder="Một câu gợi ý, không nói thẳng từ khóa" aria-label="Gợi ý"><button class="lcdbtn">GỬI GỢI Ý</button></form>` : `<div class="msg">Tới lượt ${esc(s.names[sp])} gõ gợi ý. Mọi người chờ người này gửi xong.</div>`;
     } else if (s.phase === "vote") {
       act = s.alive[me] ? (s.votes[me] !== undefined ? `<div class="msg">Bạn đã bỏ phiếu, chờ mọi người.</div>` : `<div class="msg">Bỏ phiếu loại người khả nghi.</div><div class="lcdrow">${s.alive.map((a, i) => a && i !== me ? `<button class="lcdbtn" data-vote="${i}">${esc(s.names[i])}</button>` : "").join("")}<button class="lcdbtn" data-vote="-1">KHÔNG BẦU</button></div>`) : `<div class="msg">Mọi người đang bỏ phiếu.</div>`;
     } else if (s.phase === "guess") {
@@ -125,7 +130,7 @@ G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ tr�
     const gf = el.querySelector("#uc-guess"); if (gf) gf.onsubmit = e => { e.preventDefault(); ctx.send({ text: gf.querySelector("input").value }); };
     el.querySelectorAll("[data-vote]").forEach(b => b.onclick = () => ctx.send({ target: +b.dataset.vote }));
     el.querySelectorAll("[data-force]").forEach(b => b.onclick = () => ctx.send({ t: "force" }));
-    bindChat(el, ctx);
+    bindChat(el, ctx); armStale(el, s, () => G.whitehat.view(el, ctx));
   } };
 
 /* ===================== MA SÓI ===================== */
@@ -256,6 +261,6 @@ G.werewolf = { kind: "online", flexible: true, minP: 5, maxP: 12, name: "Ma sói
     el.querySelectorAll("[data-poison]").forEach(b => b.onclick = () => ctx.send({ save: false, poison: +b.dataset.poison }));
     el.querySelectorAll("[data-witch]").forEach(b => b.onclick = () => ctx.send({ save: b.dataset.witch === "save", poison: -1 }));
     el.querySelectorAll("[data-force]").forEach(b => b.onclick = () => ctx.send({ t: "force" }));
-    bindChat(el, ctx);
+    bindChat(el, ctx); armStale(el, s, () => G.werewolf.view(el, ctx));
   } };
 })();
