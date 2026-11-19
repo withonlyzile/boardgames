@@ -41,12 +41,22 @@ function ucWin(s) {
   if (bad >= good) return "Mũ đen và Mũ trắng";
   return null;
 }
+const CLUE_MS = 20000, TALK_MS = 120000; // 20 giây mỗi lượt gợi ý, 2 phút trao đổi
 function ucNextClue(s) {
+  s.phaseAt = Date.now();
   for (let k = s.turnIdx + 1; k < s.order.length; k++) if (s.alive[s.order[k]]) { s.turnIdx = k; return; }
-  s.phase = "vote"; s.votes = {}; s.phaseAt = Date.now();
+  s.phase = "talk"; s.votes = {};
+  s.chat = [...(s.chat || []), { sys: 1, text: "Hết lượt gợi ý. Cả phòng có 2 phút trao đổi trước khi bỏ phiếu." }].slice(-60);
 }
 function ucStartRound(s) {
-  s.round++; s.phase = "clue"; s.turnIdx = -1; s.votes = {}; s.phaseAt = Date.now(); ucNextClue(s);
+  s.round++; s.phase = "clue"; s.turnIdx = -1; s.votes = {};
+  s.chat = [...(s.chat || []), { sys: 1, text: `Vòng ${s.round} bắt đầu. Mỗi người có 20 giây để gợi ý.` }].slice(-60);
+  ucNextClue(s);
+}
+function ucClue(s, seat, text, auto) {
+  s.clues.push({ r: s.round, seat, text });
+  s.chat = [...(s.chat || []), { seat, text, clue: 1, auto: auto ? 1 : 0 }].slice(-60);
+  ucNextClue(s);
 }
 function ucTally(s) {
   const alive = s.alive.filter(Boolean).length, cnt = {};
@@ -58,8 +68,9 @@ function ucTally(s) {
   if (s.roles[out] === "trang") { s.phase = "guess"; s.guessSeat = out; s.phaseAt = Date.now(); return; }
   s.winner = ucWin(s); if (!s.winner) ucStartRound(s);
 }
+const ucLimit = s => s.phase === "clue" ? CLUE_MS : s.phase === "talk" ? TALK_MS : 0;
 G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ trắng mũ đen",
-  desc: "Cả phòng nhận cùng một từ khóa, Mũ đen nhận từ gần giống, Mũ trắng không có từ. Mỗi người gợi ý một câu rồi bỏ phiếu loại người khả nghi.",
+  desc: "Cả phòng nhận cùng một từ khóa, Mũ đen nhận từ gần giống, Mũ trắng không có từ. Mỗi người có 20 giây gợi ý, cả phòng trao đổi 2 phút rồi bỏ phiếu loại một người.",
   init(players) {
     const n = players.length, c = ucCounts(n), roles = shuffle([...Array(c.den).fill("den"), ...Array(c.trang).fill("trang"), ...Array(n - c.den - c.trang).fill("dan")]);
     const pair = PAIRS[rnd(PAIRS.length)], flip = rnd(2);
@@ -71,11 +82,20 @@ G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ tr�
   },
   move(s0, mv, seat) {
     const s = clone(s0); if (s.winner) fail("Ván đã kết thúc.");
-    if (mv.t === "chat") { if (!s.alive[seat]) fail("Người đã bị loại chỉ được xem."); pushChat(s, seat, mv.text); return s; }
+    if (mv.t === "chat") {
+      if (!s.alive[seat]) fail("Người đã bị loại chỉ được xem.");
+      if (s.phase === "clue") fail("Đang tới lượt gợi ý, chờ tới lúc trao đổi rồi hãy nhắn.");
+      pushChat(s, seat, mv.text); return s;
+    }
+    if (mv.t === "timeout") { // máy nào thấy hết giờ trước thì báo, các máy khác bị bỏ qua lặng lẽ
+      const late = Date.now() - (s.phaseAt || 0) >= ucLimit(s) - 1500;
+      if (s.phase === "clue" && mv.turn === s.turnIdx && late) { ucClue(s, s.order[s.turnIdx], "Hết 20 giây, không gợi ý", true); return s; }
+      if (s.phase === "talk" && mv.round === s.round && late) { s.phase = "vote"; s.votes = {}; s.phaseAt = Date.now(); s.chat = [...s.chat, { sys: 1, text: "Hết giờ trao đổi. Mời cả phòng bỏ phiếu." }].slice(-60); return s; }
+      fail("");
+    }
     if (mv.t === "force") {
       if (Date.now() - (s.phaseAt || 0) < STALE_MS) fail("Chưa đủ 2 phút chờ.");
-      if (s.phase === "clue") { s.clues.push({ r: s.round, seat: s.order[s.turnIdx], text: "Bỏ lượt" }); s.phaseAt = Date.now(); ucNextClue(s); }
-      else if (s.phase === "vote") { s.alive.forEach((a, i) => { if (a && s.votes[i] === undefined) s.votes[i] = -1; }); ucTally(s); }
+      if (s.phase === "vote") { s.alive.forEach((a, i) => { if (a && s.votes[i] === undefined) s.votes[i] = -1; }); ucTally(s); }
       else if (s.phase === "guess") { s.log.unshift(`${s.names[s.guessSeat]} không đoán từ khóa.`); s.winner = ucWin(s); if (!s.winner) ucStartRound(s); }
       return s;
     }
@@ -84,7 +104,11 @@ G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ tr�
       const t = String(mv.text || "").trim().slice(0, 60); if (!t) fail("Nhập một câu gợi ý.");
       const mine = s.roles[seat] === "trang" ? "" : s.words[s.roles[seat] === "den" ? "den" : "dan"];
       if (mine && (" " + norm(t) + " ").includes(" " + norm(mine) + " ")) fail("Gợi ý không được chứa từ khóa của bạn.");
-      s.clues.push({ r: s.round, seat, text: t }); s.phaseAt = Date.now(); ucNextClue(s); return s;
+      ucClue(s, seat, t, false); return s;
+    }
+    if (s.phase === "talk") {
+      if (mv.t === "skiptalk") { s.phase = "vote"; s.votes = {}; s.phaseAt = Date.now(); s.chat = [...s.chat, { sys: 1, text: `${s.names[seat]} mở bỏ phiếu sớm.` }].slice(-60); return s; }
+      fail("Đang trao đổi, 2 phút sau mới bỏ phiếu.");
     }
     if (s.phase === "vote") {
       if (!s.alive[seat]) fail("Người đã bị loại không được bỏ phiếu.");
@@ -103,34 +127,46 @@ G.whitehat = { kind: "online", flexible: true, minP: 4, maxP: 12, name: "Mũ tr�
     fail("Thao tác không hợp lệ.");
   },
   view(el, ctx) {
-    const s = ctx.state, me = ctx.seat, my = s.roles[me], over = !!s.winner;
+    const s = ctx.state, me = ctx.seat, my = s.roles[me], over = !!s.winner, alive = me >= 0 && s.alive[me];
     const wordOf = i => s.roles[i] === "trang" ? "không có từ" : s.words[s.roles[i] === "den" ? "den" : "dan"];
-    const card = me >= 0 ? `<div class="rolecard ${my}"><div class="small">TỪ KHÓA CỦA BẠN</div><div class="big">${my === "trang" ? "BẠN LÀ MŨ TRẮNG" : esc(wordOf(me)).toUpperCase()}</div><div class="hint">${my === "trang" ? "Bạn không có từ khóa. Nghe gợi ý của mọi người rồi nói theo cho khéo." : "Có thể bạn là Dân thường, cũng có thể bạn là Mũ đen. Nghe gợi ý để đoán phe mình."}</div>${s.alive[me] ? "" : `<div class="hint">Bạn đã bị loại, giờ chỉ xem.</div>`}</div>` : "";
-    const people = `<ul class="plist">${s.names.map((n, i) => `<li class="${s.alive[i] ? "" : "dead"}"><span>${esc(n)}${i === me ? " · bạn" : ""}</span><span class="rd">${!s.alive[i] || over ? UC_ROLE[s.roles[i]] : s.phase === "vote" ? (s.votes[i] !== undefined ? "Đã bỏ phiếu" : "Đang chọn") : ""}</span></li>`).join("")}</ul>`;
-    const clues = s.clues.filter(c => c.r === s.round).map(c => `<div><b>${esc(s.names[c.seat])}</b> ${esc(c.text)}</div>`).join("");
-    const older = s.clues.filter(c => c.r < s.round).map(c => `<div class="hint">Vòng ${c.r}, ${esc(s.names[c.seat])}: ${esc(c.text)}</div>`).join("");
+    const card = me >= 0 ? `<div class="rolecard ${my === "trang" ? "trang" : "word"}"><div class="small">TỪ KHÓA CỦA BẠN</div><div class="big">${my === "trang" ? "BẠN LÀ MŨ TRẮNG" : esc(wordOf(me)).toUpperCase()}</div><div class="hint">${my === "trang" ? "Bạn không có từ khóa. Nghe gợi ý của mọi người rồi nói theo cho khéo." : "Có thể bạn là Dân thường, cũng có thể bạn là Mũ đen. Nghe gợi ý để đoán phe mình."}</div>${alive ? "" : `<div class="hint">Bạn đã bị loại, giờ chỉ xem.</div>`}</div>` : "";
+    const sp = s.phase === "clue" ? s.order[s.turnIdx] : -1;
+    const people = `<ul class="plist">${s.names.map((n, i) => `<li class="${s.alive[i] ? "" : "dead"}${i === sp ? " speaking" : ""}"><span>${esc(n)}${i === me ? " · bạn" : ""}</span><span class="rd">${!s.alive[i] || over ? UC_ROLE[s.roles[i]] : i === sp ? "Đang gợi ý" : s.phase === "vote" ? (s.votes[i] !== undefined ? "Đã bỏ phiếu" : "Đang chọn") : ""}</span></li>`).join("")}</ul>`;
+    const limit = ucLimit(s), timer = limit && !over ? `<span id="uc-cd">${Math.max(0, Math.ceil((limit - (Date.now() - s.phaseAt)) / 1000))}</span> GIÂY` : "";
     let act = "";
     if (over) act = `<div class="msg">${esc(s.winner)} thắng. Từ của Dân thường là ${esc(s.words.dan)}, từ của Mũ đen là ${esc(s.words.den)}.</div>`;
-    else if (s.phase === "clue") {
-      const sp = s.order[s.turnIdx];
-      act = sp === me ? `<form class="chatform" id="uc-clue"><input maxlength="60" placeholder="Một câu gợi ý, không nói thẳng từ khóa" aria-label="Gợi ý"><button class="lcdbtn">GỬI GỢI Ý</button></form>` : `<div class="msg">Tới lượt ${esc(s.names[sp])} gõ gợi ý. Mọi người chờ người này gửi xong.</div>`;
-    } else if (s.phase === "vote") {
-      act = s.alive[me] ? (s.votes[me] !== undefined ? `<div class="msg">Bạn đã bỏ phiếu, chờ mọi người.</div>` : `<div class="msg">Bỏ phiếu loại người khả nghi.</div><div class="lcdrow">${s.alive.map((a, i) => a && i !== me ? `<button class="lcdbtn" data-vote="${i}">${esc(s.names[i])}</button>` : "").join("")}<button class="lcdbtn" data-vote="-1">KHÔNG BẦU</button></div>`) : `<div class="msg">Mọi người đang bỏ phiếu.</div>`;
-    } else if (s.phase === "guess") {
-      act = me === s.guessSeat ? `<div class="msg">Bạn là Mũ trắng và vừa bị loại. Đoán từ khóa của Dân thường để thắng.</div><form class="chatform" id="uc-guess"><input maxlength="40" placeholder="Từ khóa của Dân thường" aria-label="Đoán từ khóa"><button class="lcdbtn">ĐOÁN</button></form>` : `<div class="msg">${esc(s.names[s.guessSeat])} là Mũ trắng, đang đoán từ khóa của Dân thường.</div>`;
-    }
-    el.innerHTML = `<div class="score"><span>VÒNG ${s.round}</span><span>${over ? "KẾT THÚC" : s.phase === "clue" ? "GỢI Ý" : s.phase === "vote" ? "BỎ PHIẾU" : "MŨ TRẮNG ĐOÁN"}</span></div>
+    else if (s.phase === "clue") act = sp === me ? `<div class="msg">Tới lượt bạn. Gõ một câu gợi ý trong 20 giây.</div><form class="chatform" id="uc-clue"><input maxlength="60" placeholder="Một câu gợi ý, không nói thẳng từ khóa" aria-label="Gợi ý" autocomplete="off"><button class="lcdbtn">GỬI GỢI Ý</button></form>` : `<div class="msg">Tới lượt ${esc(s.names[sp])} gợi ý, còn ${timer || "vài giây"}.</div>`;
+    else if (s.phase === "talk") act = `<div class="msg">Cả phòng trao đổi trong khung chat, còn ${timer}. Hết giờ sẽ tự mở bỏ phiếu.</div>${alive ? `<div class="lcdrow"><button class="lcdbtn" data-skip="1">BỎ PHIẾU LUÔN</button></div>` : ""}`;
+    else if (s.phase === "vote") act = alive ? (s.votes[me] !== undefined ? `<div class="msg">Bạn đã bỏ phiếu, chờ mọi người.</div>` : `<div class="msg">Bỏ phiếu loại một người khả nghi.</div><div class="lcdrow">${s.alive.map((a, i) => a && i !== me ? `<button class="lcdbtn" data-vote="${i}">${esc(s.names[i])}</button>` : "").join("")}<button class="lcdbtn" data-vote="-1">KHÔNG BẦU</button></div>`) : `<div class="msg">Mọi người đang bỏ phiếu.</div>`;
+    else if (s.phase === "guess") act = me === s.guessSeat ? `<div class="msg">Bạn là Mũ trắng và vừa bị loại. Đoán từ khóa của Dân thường để thắng.</div><form class="chatform" id="uc-guess"><input maxlength="40" placeholder="Từ khóa của Dân thường" aria-label="Đoán từ khóa"><button class="lcdbtn">ĐOÁN</button></form>` : `<div class="msg">${esc(s.names[s.guessSeat])} là Mũ trắng, đang đoán từ khóa của Dân thường.</div>`;
+    const msgs = (s.chat || []).slice(-40).map(m => m.sys ? `<div class="sys">${esc(m.text)}</div>` : m.clue ? `<div class="clue${m.auto ? " auto" : ""}"><b>${nm(ctx, m.seat)}</b> gợi ý: ${esc(m.text)}</div>` : `<div><b>${nm(ctx, m.seat)}</b> ${esc(m.text)}</div>`).join("");
+    const canChat = alive && !over && (s.phase === "talk" || s.phase === "vote");
+    const phaseName = over ? "KẾT THÚC" : { clue: "GỢI Ý", talk: "TRAO ĐỔI", vote: "BỎ PHIẾU", guess: "MŨ TRẮNG ĐOÁN" }[s.phase];
+    el.innerHTML = `<div class="score"><span>VÒNG ${s.round}</span><span>${phaseName}</span><span>${timer}</span></div>
       <div class="party">${card}<div>${people}</div></div>
-      <div class="sec2">GỢI Ý VÒNG NÀY</div><div class="clues">${clues || '<span class="hint">Chưa có gợi ý.</span>'}</div>
-      ${act}${!over ? `<div class="lcdrow">${staleBtn(s)}</div>` : ""}
-      ${older ? `<details><summary>Gợi ý các vòng trước</summary>${older}</details>` : ""}
-      <div class="log">${s.log.slice(0, 6).map(esc).join("<br>")}</div>
-      ${chatBox(s, ctx, me >= 0 && s.alive[me] && !over)}`;
-    const cf = el.querySelector("#uc-clue"); if (cf) cf.onsubmit = e => { e.preventDefault(); ctx.send({ text: cf.querySelector("input").value }); };
+      <div class="chat main"><div class="chatlog">${msgs || '<span class="hint">Chưa có tin nhắn.</span>'}</div>
+      ${canChat ? `<form class="chatform" id="uc-chat"><input maxlength="120" placeholder="Nhắn cho cả phòng" aria-label="Tin nhắn" autocomplete="off"><button class="lcdbtn">GỬI</button></form>` : ""}</div>
+      ${act}${!over && (s.phase === "vote" || s.phase === "guess") ? `<div class="lcdrow">${staleBtn(s)}</div>` : ""}
+      <div class="log">${s.log.slice(0, 6).map(esc).join("<br>")}</div>`;
+    const log = el.querySelector(".chatlog"); if (log) log.scrollTop = log.scrollHeight;
+    const cf = el.querySelector("#uc-clue"); if (cf) { cf.onsubmit = e => { e.preventDefault(); ctx.send({ text: cf.querySelector("input").value }); }; cf.querySelector("input").focus(); }
+    const ch = el.querySelector("#uc-chat"); if (ch) ch.onsubmit = e => { e.preventDefault(); const i = ch.querySelector("input"); if (i.value.trim()) ctx.send({ t: "chat", text: i.value }); i.value = ""; };
     const gf = el.querySelector("#uc-guess"); if (gf) gf.onsubmit = e => { e.preventDefault(); ctx.send({ text: gf.querySelector("input").value }); };
     el.querySelectorAll("[data-vote]").forEach(b => b.onclick = () => ctx.send({ target: +b.dataset.vote }));
+    el.querySelectorAll("[data-skip]").forEach(b => b.onclick = () => ctx.send({ t: "skiptalk" }));
     el.querySelectorAll("[data-force]").forEach(b => b.onclick = () => ctx.send({ t: "force" }));
-    bindChat(el, ctx); armStale(el, s, () => G.whitehat.view(el, ctx));
+    // Đồng hồ đếm ngược: chỉ đổi con số, không vẽ lại để không mất chữ đang gõ.
+    clearInterval(el._cd);
+    if (limit && !over) {
+      const key = s.phase + ":" + s.round + ":" + s.turnIdx;
+      el._cd = setInterval(() => {
+        if (!el.isConnected) { clearInterval(el._cd); return; }
+        const left = limit - (Date.now() - s.phaseAt), c = el.querySelector("#uc-cd");
+        if (c) c.textContent = Math.max(0, Math.ceil(left / 1000));
+        if (left <= 0 && el._toSent !== key) { el._toSent = key; ctx.send(s.phase === "clue" ? { t: "timeout", turn: s.turnIdx } : { t: "timeout", round: s.round }); }
+      }, 500);
+    }
+    armStale(el, s, () => G.whitehat.view(el, ctx));
   } };
 
 /* ===================== MA SÓI ===================== */

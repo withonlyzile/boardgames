@@ -362,7 +362,7 @@ function drawRoom(code, r){
   if (r.status !== "lobby" && g) {
     const el = $("#screen"); el._sel = keepSel;
     g.view(el, { state:r.state, seat, players:r.players, hotseat:false,
-      send(mv){ txRoom(code, x => { if (x.status !== "playing") throw new Error("Ván chưa bắt đầu."); const s = G[x.game].move(x.state, mv, x.players.findIndex(p=>p.uid===user.uid)); return { state:s, status: s.winner !== null && s.winner !== undefined ? "done" : "playing" }; }).catch(e=>toast(e.message)); } });
+      send(mv){ txRoom(code, x => { if (x.status !== "playing") throw new Error("Ván chưa bắt đầu."); const s = G[x.game].move(x.state, mv, x.players.findIndex(p=>p.uid===user.uid)); return { state:s, status: s.winner !== null && s.winner !== undefined ? "done" : "playing" }; }).catch(e=>{ if (e.message) toast(e.message); }); } });
   }
 }
 
