@@ -1,5 +1,5 @@
 (() => {
-const APP_V = 7; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
+const APP_V = 8; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
 const G = window.TLC_GAMES, { esc } = window.TLC_HELPERS;
 const SEASONS = {1:{name:"Mùa 1",long:"Devil's Plan mùa 1",c:"var(--s1)"},2:{name:"Mùa 2",long:"Devil's Plan mùa 2",c:"var(--s2)"},3:{name:"Mùa 3",long:"Devil's Plan mùa 3",c:"var(--s3)"},0:{name:"Boardgame khác",long:"Boardgame khác",c:"var(--s0)"}};
 const TYPES = {main:"Trận chính",prison:"Trận trong tù",prize:"Trận giải thưởng",exile:"Vùng lưu đày",final:"Chung kết",hidden:"Thử thách ẩn",other:"Boardgame"};
