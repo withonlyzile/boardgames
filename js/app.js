@@ -1,4 +1,5 @@
 (() => {
+const APP_V = 7; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
 const G = window.TLC_GAMES, { esc } = window.TLC_HELPERS;
 const SEASONS = {1:{name:"Mùa 1",long:"Devil's Plan mùa 1",c:"var(--s1)"},2:{name:"Mùa 2",long:"Devil's Plan mùa 2",c:"var(--s2)"},3:{name:"Mùa 3",long:"Devil's Plan mùa 3",c:"var(--s3)"},0:{name:"Boardgame khác",long:"Boardgame khác",c:"var(--s0)"}};
 const TYPES = {main:"Trận chính",prison:"Trận trong tù",prize:"Trận giải thưởng",exile:"Vùng lưu đày",final:"Chung kết",hidden:"Thử thách ẩn",other:"Boardgame"};
@@ -343,7 +344,9 @@ function drawRoom(code, r){
       ${host?`<div class="lcdrow"><button class="lcdbtn" id="rematch">VÁN MỚI CÙNG NHÓM</button></div>`:""}</div>`;
   }
   const body = $("#room-body"); const keepSel = $("#screen") ? $("#screen")._sel : null;
-  body.innerHTML = `<div class="room"><div>${mainCol}</div><aside>${side}</aside></div>`;
+  const stale = (r.appV || 0) > APP_V ? `<div class="newver">Trang vừa có bản mới, máy bạn đang chạy bản cũ nên có thể chơi lệch với cả phòng. <button class="btn" id="reload">Tải lại trang</button></div>` : "";
+  body.innerHTML = `${stale}<div class="room"><div>${mainCol}</div><aside>${side}</aside></div>`;
+  if ($("#reload")) $("#reload").onclick = () => location.reload();
   $("#cp").onclick = () => { navigator.clipboard.writeText(link).then(()=>toast("Đã chép link mời"), ()=>toast(link)); };
   if ($("#leave")) $("#leave").onclick = async () => {
     try { await txRoom(code, x => { const pl = x.players.filter(p => p.uid !== user.uid), ids = x.memberIds.filter(u => u !== user.uid);
@@ -356,13 +359,13 @@ function drawRoom(code, r){
   if ($("#start")) $("#start").onclick = () => txRoom(code, x => {
     const gx = G[x.game]; if (gx.flexible ? x.players.length < gx.minP : x.players.length !== x.need) throw new Error("Phòng chưa đủ người.");
     if (!x.players.every(p => p.ready)) throw new Error("Còn người chưa sẵn sàng.");
-    return { status:"playing", state: G[x.game].init(x.players) };
+    return { status:"playing", state: G[x.game].init(x.players), appV: Math.max(x.appV || 0, APP_V) };
   }).catch(e=>toast(e.message));
-  if ($("#rematch")) $("#rematch").onclick = () => txRoom(code, x => ({ state: G[x.game].init(x.players), status:"playing" })).catch(e=>toast(e.message));
+  if ($("#rematch")) $("#rematch").onclick = () => txRoom(code, x => ({ state: G[x.game].init(x.players), status:"playing", appV: Math.max(x.appV || 0, APP_V) })).catch(e=>toast(e.message));
   if (r.status !== "lobby" && g) {
     const el = $("#screen"); el._sel = keepSel;
     g.view(el, { state:r.state, seat, players:r.players, hotseat:false,
-      send(mv){ txRoom(code, x => { if (x.status !== "playing") throw new Error("Ván chưa bắt đầu."); const s = G[x.game].move(x.state, mv, x.players.findIndex(p=>p.uid===user.uid)); return { state:s, status: s.winner !== null && s.winner !== undefined ? "done" : "playing" }; }).catch(e=>{ if (e.message) toast(e.message); }); } });
+      send(mv){ txRoom(code, x => { if (x.status !== "playing") throw new Error("Ván chưa bắt đầu."); const s = G[x.game].move(x.state, mv, x.players.findIndex(p=>p.uid===user.uid)); return { state:s, status: s.winner !== null && s.winner !== undefined ? "done" : "playing", appV: Math.max(x.appV || 0, APP_V) }; }).catch(e=>{ if (e.message) toast(e.message); }); } });
   }
 }
 

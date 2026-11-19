@@ -243,3 +243,5 @@ details{margin-top:8px;font-size:14px}
 .chatlog .clue{background:#fbfbf4;border-left:4px solid var(--s1);padding:2px 6px;margin:3px 0}
 .chatlog .clue.auto{opacity:.6}
 .plist li.speaking{outline:3px solid var(--btn);outline-offset:-3px}
+.chatlog .sys{color:var(--lcd-ink);font-size:13px}.chatlog .sys b{color:var(--btn)}
+.newver{background:var(--btn);color:#fff;padding:10px 14px;margin:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:600}
