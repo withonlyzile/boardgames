@@ -1,4 +1,4 @@
-/* Tủ Luật Chơi — game modules.
+/* Play with Zile — game modules.
    Solo games:   {kind:"solo", name, desc, mount(el) -> cleanup}
    Online games: {kind:"online", name, desc, minP, maxP, init(players) -> state,
                   move(state, mv, seat) -> new state (throws Error with Vietnamese message),
@@ -113,56 +113,135 @@ G.poker = { kind: "solo", name: "Poker trí nhớ", desc: "Nhớ 16 lá bài tro
     $("#p-new", el).onclick = deal; deal(); return T.clear;
   } };
 
+/* ================= Kim tự tháp số: bộ sinh đề dùng chung ================= */
+function mulberry(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const PY_LEVELS = {
+  de:   { name: "Dễ",  ops: ["+", "-"],           nmax: 9,  tmin: 3,  tmax: 20, sol: [1, 6] },
+  vua:  { name: "Vừa", ops: ["+", "-", "×"],      nmax: 9,  tmin: 5,  tmax: 40, sol: [1, 5] },
+  kho:  { name: "Khó", ops: ["+", "-", "×", "÷"], nmax: 12, tmin: 10, tmax: 80, sol: [1, 4] },
+  quai: { name: "Quái", ops: ["+", "-", "×", "÷"], nmax: 15, tmin: 20, tmax: 150, sol: [1, 3] }
+};
+function pyEval(a, b, c) { // ô đầu bỏ phép tính, nhân chia trước cộng trừ, chỉ nhận kết quả nguyên
+  const n = [a.n, b.n, c.n], o = [b.o, c.o];
+  const ap = (x, op, y) => op === "+" ? [x[0] * y[1] + y[0] * x[1], x[1] * y[1]] : op === "-" ? [x[0] * y[1] - y[0] * x[1], x[1] * y[1]] : op === "×" ? [x[0] * y[0], x[1] * y[1]] : (y[0] === 0 ? null : [x[0] * y[1], x[1] * y[0]]);
+  const hi = op => op === "×" || op === "÷"; let v;
+  if (hi(o[1]) && !hi(o[0])) { const r = ap([n[1], 1], o[1], [n[2], 1]); if (!r) return null; v = ap([n[0], 1], o[0], r); }
+  else { const l = ap([n[0], 1], o[0], [n[1], 1]); if (!l) return null; v = ap(l, o[1], [n[2], 1]); }
+  return v && v[1] !== 0 && v[0] % v[1] === 0 ? v[0] / v[1] : null;
+}
+function pyGen(rand, levelKey) {
+  const L = PY_LEVELS[levelKey] || PY_LEVELS.vua, r = n => Math.floor(rand() * n);
+  for (let tries = 0; tries < 400; tries++) {
+    const tiles = Array.from({ length: 10 }, () => ({ o: L.ops[r(L.ops.length)], n: 1 + r(L.nmax) }));
+    const tally = {};
+    for (let a = 0; a < 10; a++) for (let b = 0; b < 10; b++) for (let c = 0; c < 10; c++) {
+      if (a === b || b === c || a === c) continue;
+      const v = pyEval(tiles[a], tiles[b], tiles[c]); if (v === null || v < L.tmin || v > L.tmax) continue;
+      (tally[v] ||= []).push([a, b, c].join("-"));
+    }
+    const cands = Object.entries(tally).filter(([, l]) => l.length >= L.sol[0] && l.length <= L.sol[1]);
+    if (!cands.length) continue;
+    cands.sort((x, y) => +x[0] - +y[0]);
+    const [tv, list] = cands[r(cands.length)];
+    return { tiles, target: +tv, sols: list, level: levelKey };
+  }
+  return pyGen(rand, "de");
+}
+function pyramidHTML(tiles, sel) {
+  let i = 0, h = ""; for (let row = 1; row <= 4; row++) { let x = ""; for (let k = 0; k < row; k++, i++) x += `<button class="hex ${sel.includes(i) ? "on" : ""}" data-i="${i}">${tiles[i].o}${tiles[i].n}</button>`; h += `<div class="row">${x}</div>`; }
+  return h;
+}
+const pyExpr = (tiles, sel) => sel.map((i, k) => (k ? " " + tiles[i].o + " " : "") + tiles[i].n).join("");
+
 /* ================= SOLO: Kim tự tháp số ================= */
-G.pyramid = { kind: "solo", name: "Kim tự tháp số", desc: "Chọn 3 ô theo thứ tự để ghép phép tính bằng con số mục tiêu. Mỗi vòng có 3 phút.",
+G.pyramid = { kind: "solo", name: "Kim tự tháp số", desc: "Chọn 3 ô theo thứ tự để ghép phép tính bằng con số mục tiêu. Có 4 mức khó, mỗi vòng 3 phút, tìm càng nhiều cách càng nhiều điểm.",
   mount(el) {
-    const T = timers(), OPS = ["+", "-", "×", "÷"];
-    el.innerHTML = `<div class="score"><span id="y-r">VÒNG 1/10</span><span id="y-t">3:00</span><span id="y-s">ĐIỂM 0</span></div>
-      <div class="target"><span class="small">MỤC TIÊU</span><br><span id="y-target">0</span></div>
+    const T = timers();
+    el.innerHTML = `<div class="lcdrow">${Object.entries(PY_LEVELS).map(([k, L]) => `<button class="lcdbtn" data-lv="${k}">${L.name.toUpperCase()}</button>`).join("")}<button class="lcdbtn" data-lv="tron">TRỘN</button></div>
+      <div class="score"><span id="y-r">VÒNG 1/10</span><span id="y-t">3:00</span><span id="y-s">ĐIỂM 0</span></div>
+      <div class="target"><span class="small" id="y-lv">MỤC TIÊU</span><br><span id="y-target">0</span></div>
       <div class="pyr" id="y-pyr"></div><div class="msg" id="y-expr">Chọn 3 ô theo thứ tự</div><div class="found" id="y-found"></div>
       <div class="lcdrow"><button class="lcdbtn" id="y-ok" disabled>NỘP</button><button class="lcdbtn" id="y-clr">XÓA CHỌN</button><button class="lcdbtn" id="y-next">VÒNG SAU</button><button class="lcdbtn" id="y-re">CHƠI LẠI</button></div>
       <div class="msg" id="y-msg" aria-live="polite"></div>`;
-    let tiles, target, sols, found, sel, round = 1, score = 0, tl, tick;
-    function ev(a, b, c) {
-      const n = [a.n, b.n, c.n], o = [b.o, c.o];
-      const ap = (x, op, y) => op === "+" ? [x[0] * y[1] + y[0] * x[1], x[1] * y[1]] : op === "-" ? [x[0] * y[1] - y[0] * x[1], x[1] * y[1]] : op === "×" ? [x[0] * y[0], x[1] * y[1]] : (y[0] === 0 ? null : [x[0] * y[1], x[1] * y[0]]);
-      const hi = op => op === "×" || op === "÷"; let v;
-      if (hi(o[1]) && !hi(o[0])) { const r = ap([n[1], 1], o[1], [n[2], 1]); if (!r) return null; v = ap([n[0], 1], o[0], r); }
-      else { const l = ap([n[0], 1], o[0], [n[1], 1]); if (!l) return null; v = ap(l, o[1], [n[2], 1]); }
-      return v && v[1] !== 0 && v[0] % v[1] === 0 ? v[0] / v[1] : null;
-    }
+    let P, found, sel, round = 1, score = 0, tl, tick, mode = "tron";
+    const lvFor = () => mode !== "tron" ? mode : round <= 3 ? "de" : round <= 6 ? "vua" : round <= 9 ? "kho" : "quai";
     function newRound() {
-      for (;;) {
-        tiles = Array.from({ length: 10 }, () => ({ o: OPS[rnd(4)], n: 1 + rnd(9) })); const tally = {};
-        for (let a = 0; a < 10; a++) for (let b = 0; b < 10; b++) for (let c = 0; c < 10; c++) { if (a === b || b === c || a === c) continue; const v = ev(tiles[a], tiles[b], tiles[c]); if (v === null || v < 1 || v > 40) continue; (tally[v] ||= []).push([a, b, c].join("-")); }
-        const cands = Object.entries(tally).filter(([, l]) => l.length >= 2 && l.length <= 8);
-        if (!cands.length) continue;
-        const [tv, list] = cands[rnd(cands.length)]; target = +tv; sols = new Set(list); break;
-      }
-      found = []; sel = []; $("#y-target", el).textContent = target; $("#y-r", el).textContent = `VÒNG ${round}/10`; $("#y-msg", el).textContent = `Có ${sols.size} cách ra ${target}.`;
+      P = pyGen(Math.random, lvFor()); found = []; sel = [];
+      $("#y-target", el).textContent = P.target; $("#y-r", el).textContent = `VÒNG ${round}/10`; $("#y-lv", el).textContent = "MỤC TIÊU · " + PY_LEVELS[P.level].name.toUpperCase();
+      $("#y-msg", el).textContent = `Có ${P.sols.length} cách ra ${P.target}.`;
       draw(); tl = 180; show(); clearInterval(tick); tick = T.every(1000, () => { tl--; show(); if (tl <= 0) end("Hết giờ."); });
     }
     const show = () => { const t = Math.max(tl, 0); $("#y-t", el).textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; };
-    const expr = () => sel.map((i, k) => (k ? " " + tiles[i].o + " " : "") + tiles[i].n).join("");
     function draw() {
-      let i = 0, h = ""; for (let r = 1; r <= 4; r++) { let row = ""; for (let k = 0; k < r; k++, i++) row += `<button class="hex ${sel.includes(i) ? "on" : ""}" data-i="${i}">${tiles[i].o}${tiles[i].n}</button>`; h += `<div class="row">${row}</div>`; }
-      $("#y-pyr", el).innerHTML = h;
-      el.querySelectorAll(".hex").forEach(b => b.onclick = () => { const i = +b.dataset.i; if (sel.includes(i)) sel = sel.filter(x => x !== i); else if (sel.length < 3) sel.push(i); draw(); });
-      $("#y-expr", el).textContent = sel.length ? expr() + (sel.length === 3 ? " = ?" : "") : "Chọn 3 ô theo thứ tự";
+      $("#y-pyr", el).innerHTML = pyramidHTML(P.tiles, sel);
+      el.querySelectorAll("#y-pyr .hex").forEach(b => b.onclick = () => { const i = +b.dataset.i; if (sel.includes(i)) sel = sel.filter(x => x !== i); else if (sel.length < 3) sel.push(i); draw(); });
+      $("#y-expr", el).textContent = sel.length ? pyExpr(P.tiles, sel) + (sel.length === 3 ? " = ?" : "") : "Chọn 3 ô theo thứ tự";
       $("#y-found", el).innerHTML = found.map(f => `<span>${esc(f)}</span>`).join(""); $("#y-ok", el).disabled = sel.length !== 3;
     }
-    function end(why) { clearInterval(tick); $("#y-msg", el).textContent = `${why} Bạn tìm được ${found.length} trên ${sols.size} cách.`; }
+    function end(why) { clearInterval(tick); $("#y-msg", el).textContent = `${why} Bạn tìm được ${found.length} trên ${P.sols.length} cách.`; }
     $("#y-ok", el).onclick = () => {
-      if (sel.length !== 3 || tl <= 0) return; const k = sel.join("-"), t = expr();
+      if (sel.length !== 3 || tl <= 0) return; const k = sel.join("-"), t = pyExpr(P.tiles, sel);
       if (found.includes(t)) { score--; $("#y-msg", el).textContent = "Đáp án này đã có, trừ một điểm."; }
-      else if (sols.has(k)) { score++; found.push(t); $("#y-msg", el).textContent = "Đúng, cộng một điểm."; if (found.length === sols.size) end("Đủ hết các cách."); }
-      else { score--; const v = ev(tiles[sel[0]], tiles[sel[1]], tiles[sel[2]]); $("#y-msg", el).textContent = `Phép tính ra ${v === null ? "số lẻ" : v}, trừ một điểm.`; }
+      else if (P.sols.includes(k)) { score++; found.push(t); $("#y-msg", el).textContent = "Đúng, cộng một điểm."; if (found.length === P.sols.length) end("Đủ hết các cách."); }
+      else { score--; const v = pyEval(P.tiles[sel[0]], P.tiles[sel[1]], P.tiles[sel[2]]); $("#y-msg", el).textContent = `Phép tính ra ${v === null ? "số lẻ" : v}, trừ một điểm.`; }
       $("#y-s", el).textContent = "ĐIỂM " + score; sel = []; draw();
     };
     $("#y-clr", el).onclick = () => { sel = []; draw(); };
     $("#y-next", el).onclick = () => { if (round >= 10) { end(`Hết 10 vòng với ${score} điểm.`); return; } round++; newRound(); };
-    $("#y-re", el).onclick = () => { round = 1; score = 0; $("#y-s", el).textContent = "ĐIỂM 0"; newRound(); };
+    const restart = () => { round = 1; score = 0; $("#y-s", el).textContent = "ĐIỂM 0"; newRound(); };
+    $("#y-re", el).onclick = restart;
+    el.querySelectorAll("[data-lv]").forEach(b => b.onclick = () => { mode = b.dataset.lv; restart(); });
     newRound(); return T.clear;
+  } };
+
+/* ================= ONLINE: Đua kim tự tháp (nhiều người, cùng đề) ================= */
+const RACE_Q = 10, RACE_MS = 90000;
+const raceLevel = q => q < 3 ? "de" : q < 6 ? "vua" : q < 9 ? "kho" : "quai";
+const racePuzzle = (seed, q) => pyGen(mulberry(seed + q * 7919), raceLevel(q));
+G.pyramidrace = { kind: "online", flexible: true, name: "Đua kim tự tháp", minP: 2, maxP: 8,
+  desc: "Mọi người trong phòng giải cùng 10 câu kim tự tháp, đề giống hệt nhau trên mọi máy. Mỗi câu tìm một phép tính đúng. Ai đúng nhiều câu nhất thắng, bằng điểm thì ai tốn ít thời gian hơn thắng.",
+  init(players) { return { seed: Math.floor(Math.random() * 2e9), prog: players.map(() => ({ q: 0, score: 0, time: 0, done: false })), winner: null, rank: null }; },
+  move(s0, mv, seat) {
+    const s = clone(s0); if (s.winner !== null) fail("Ván đã kết thúc."); const p = s.prog[seat]; if (!p) fail("Bạn không có ghế trong ván này.");
+    if (p.done) fail("Bạn đã làm xong 10 câu."); if (mv.q !== p.q) fail("Câu này đã được ghi rồi.");
+    const ms = Math.max(0, Math.min(RACE_MS, Math.floor(mv.ms || 0)));
+    if (mv.pick) { const P = racePuzzle(s.seed, p.q), [a, b, c] = mv.pick; if (new Set(mv.pick).size !== 3 || pyEval(P.tiles[a], P.tiles[b], P.tiles[c]) !== P.target) fail("Phép tính chưa đúng."); p.score++; }
+    p.time += ms; p.q++; if (p.q >= RACE_Q) p.done = true;
+    if (s.prog.every(x => x.done)) {
+      s.rank = s.prog.map((x, i) => i).sort((a, b) => (s.prog[b].score - s.prog[a].score) || (s.prog[a].time - s.prog[b].time));
+      s.winner = s.rank[0];
+    }
+    return s;
+  },
+  view(el, ctx) {
+    const s = ctx.state, P = ctx.players, seat = ctx.seat, me = s.prog[seat];
+    const fmt = ms => (ms / 1000).toFixed(1) + " giây";
+    const board = `<table class="sheet-t race"><thead><tr><th>Người chơi</th><th>Câu</th><th>Đúng</th><th>Thời gian</th></tr></thead><tbody>${(s.rank || s.prog.map((_, i) => i)).map((i, k) => `<tr${i === seat ? ' class="first"' : ""}><td>${s.rank ? (k + 1) + ". " : ""}${esc(P[i]?.name)}</td><td>${s.prog[i].done ? "Xong" : (s.prog[i].q + 1) + "/" + RACE_Q}</td><td>${s.prog[i].score}</td><td>${fmt(s.prog[i].time)}</td></tr>`).join("")}</tbody></table>`;
+    if (s.winner !== null) { el.innerHTML = `<div class="msg">${esc(P[s.winner]?.name)} thắng với ${s.prog[s.winner].score} câu đúng trong ${fmt(s.prog[s.winner].time)}.</div>${board}`; return; }
+    if (!me || me.done || ctx.hotseat) { el.innerHTML = `<div class="msg">${me && me.done ? "Bạn đã xong 10 câu, chờ mọi người làm xong." : "Bạn đang xem ván này."}</div>${board}`; return; }
+    const Pz = racePuzzle(s.seed, me.q);
+    if (el._q !== me.q) { el._q = me.q; el._start = Date.now(); el._sel = []; el._busy = false; }
+    const sel = el._sel;
+    el.innerHTML = `<div class="score"><span>CÂU ${me.q + 1}/${RACE_Q} · ${PY_LEVELS[Pz.level].name.toUpperCase()}</span><span id="rc-t">90</span><span>ĐÚNG ${me.score}</span></div>
+      <div class="target"><span class="small">MỤC TIÊU</span><br><span>${Pz.target}</span></div>
+      <div class="pyr">${pyramidHTML(Pz.tiles, sel)}</div>
+      <div class="msg">${sel.length ? esc(pyExpr(Pz.tiles, sel)) + (sel.length === 3 ? " = ?" : "") : "Chọn 3 ô theo thứ tự"}</div>
+      <div class="lcdrow"><button class="lcdbtn" id="rc-ok" ${sel.length === 3 ? "" : "disabled"}>NỘP</button><button class="lcdbtn" id="rc-clr">XÓA CHỌN</button><button class="lcdbtn" id="rc-skip">BỎ CÂU</button></div>
+      <div class="msg" id="rc-msg" aria-live="polite">${esc(el._msg || "")}</div>${board}`;
+    el._msg = "";
+    const redraw = () => G.pyramidrace.view(el, ctx);
+    el.querySelectorAll(".pyr .hex").forEach(b => b.onclick = () => { const i = +b.dataset.i; if (sel.includes(i)) sel.splice(sel.indexOf(i), 1); else if (sel.length < 3) sel.push(i); redraw(); });
+    const send = pick => { if (el._busy) return; el._busy = true; clearInterval(el._tick); ctx.send({ q: me.q, pick, ms: Date.now() - el._start }); };
+    $("#rc-ok", el).onclick = () => {
+      if (sel.length !== 3) return;
+      if (pyEval(Pz.tiles[sel[0]], Pz.tiles[sel[1]], Pz.tiles[sel[2]]) === Pz.target) send([...sel]);
+      else { const v = pyEval(Pz.tiles[sel[0]], Pz.tiles[sel[1]], Pz.tiles[sel[2]]); el._msg = `Phép tính ra ${v === null ? "số lẻ" : v}, chưa đúng. Thử lại.`; el._sel = []; G.pyramidrace.view(el, ctx); }
+    };
+    $("#rc-clr", el).onclick = () => { el._sel = []; redraw(); };
+    $("#rc-skip", el).onclick = () => send(null);
+    clearInterval(el._tick);
+    const tick = () => { if (!el.isConnected) { clearInterval(el._tick); return; } const left = Math.max(0, Math.ceil((RACE_MS - (Date.now() - el._start)) / 1000)); const t = $("#rc-t", el); if (t) t.textContent = left; if (left <= 0) send(null); };
+    tick(); el._tick = setInterval(tick, 500);
   } };
 
 /* ================= SOLO: Lục giác ================= */

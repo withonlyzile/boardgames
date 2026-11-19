@@ -33,21 +33,32 @@ function renderWho(){
   else { w.innerHTML = `<button class="pill" id="login">Đăng nhập Google</button>`; $("#login").onclick = login; }
   $("#nav-add").hidden = !isAdmin;
 }
+// Báo cho chủ trang qua mail mỗi lần có người đăng nhập (script Google Apps Script tự kiểm tra mã đăng nhập).
+function notifyLogin(res){
+  try {
+    const tok = res && res.credential && res.credential.idToken;
+    if (!tok || !window.TLC_NOTIFY_URL) return;
+    fetch(window.TLC_NOTIFY_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ idToken: tok }) }).catch(() => {});
+  } catch (e) {}
+}
 async function login(){
-  try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+  try { notifyLogin(await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())); }
   catch (e) { if (e && e.code === "auth/popup-blocked") await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); else toast("Chưa đăng nhập được, thử lại."); }
 }
+if (auth) auth.getRedirectResult().then(notifyLogin).catch(() => {});
 const myName = () => (user && (user.displayName || (user.email || "").split("@")[0])) || "Người chơi";
 
 /* ---------- data ---------- */
+const EXTRA_PLAY = { "s2-equation-pyramid": ["pyramidrace"] };
+const withExtra = g => EXTRA_PLAY[g.id] ? { ...g, playable: [...new Set([...(g.playable || []), ...EXTRA_PLAY[g.id]])] } : g;
 async function loadGames(){
   if (db) {
     db.collection("games").onSnapshot(snap => {
       if (snap.empty) { if (!fromStore) return; }
-      if (!snap.empty) { games = snap.docs.map(d => ({id:d.id, ...d.data()})); fromStore = true; loaded = true; refresh(); }
+      if (!snap.empty) { games = snap.docs.map(d => withExtra({id:d.id, ...d.data()})); fromStore = true; loaded = true; refresh(); }
     }, () => {});
   }
-  try { const r = await fetch("games.json", {cache:"no-cache"}); const j = await r.json(); if (!fromStore) { games = j; loaded = true; refresh(); } }
+  try { const r = await fetch("games.json", {cache:"no-cache"}); const j = await r.json(); if (!fromStore) { games = j.map(withExtra); loaded = true; refresh(); } }
   catch (e) { loaded = true; refresh(); }
 }
 function refresh(){ if (view === "" || view === "all") renderResults(); else if (!view.startsWith("play-") && !view.startsWith("local-") && !view.startsWith("room-") && !view.startsWith("score-")) route(); }
@@ -134,7 +145,7 @@ function renderResults(){
 function playButtons(keys){
   return keys.filter(k => G[k]).map(k => G[k].kind === "solo"
     ? `<button class="btn primary" data-go="play-${k}">Chơi thử ${esc(G[k].name)}</button>`
-    : `<button class="btn primary" data-go="rooms-${k}">${esc(G[k].name)} với bạn bè</button><button class="btn" data-go="local-${k}">${esc(G[k].name)} chung một máy</button>`).join("");
+    : `<button class="btn primary" data-go="rooms-${k}">${esc(G[k].name)} với bạn bè</button>${G[k].flexible ? "" : `<button class="btn" data-go="local-${k}">${esc(G[k].name)} chung một máy</button>`}`).join("");
 }
 function renderDetail(id){
   const g = games.find(x => x.id === id);
@@ -193,7 +204,7 @@ function linkedGames(key){ return games.filter(g => (g.playable||[]).includes(ke
 function renderPlayList(){
   const solo = Object.entries(G).filter(([,g]) => g.kind==="solo"), online = Object.entries(G).filter(([,g]) => g.kind==="online");
   const card = ([k,g]) => `<div class="playcard"><h3>${esc(g.name)}</h3><p>${esc(g.desc)}</p><div class="lcdrow" style="justify-content:flex-start">${g.kind==="solo"
-      ? `<button class="lcdbtn" data-go="play-${k}">CHƠI</button>` : `<button class="lcdbtn" data-go="rooms-${k}">VÀO PHÒNG</button><button class="lcdbtn" data-go="local-${k}">MỘT MÁY</button>`}</div></div>`;
+      ? `<button class="lcdbtn" data-go="play-${k}">CHƠI</button>` : `<button class="lcdbtn" data-go="rooms-${k}">VÀO PHÒNG</button>${g.flexible ? "" : `<button class="lcdbtn" data-go="local-${k}">MỘT MÁY</button>`}`}</div></div>`;
   main.innerHTML = `<div class="sec">CHƠI VỚI BẠN BÈ</div><p>Đăng nhập Google rồi vào một trong 3 phòng có sẵn của mỗi trò. Hoặc hai người chơi chung một máy.</p><div class="playlist">${online.map(card).join("")}</div>
     <div class="sec">CHƠI MỘT MÌNH</div><div class="playlist">${solo.map(card).join("")}</div>`;
   bindGo();
@@ -240,13 +251,13 @@ const gameOf = id => id.split("-")[0];
 const roomLabel = id => /-\d+$/.test(id) ? "Phòng " + id.split("-")[1] : "Phòng thêm " + id.split("-x")[1];
 const isFree = r => !r || !r.players || !r.players.length || Date.now() - (r.updatedAt || 0) > STALE;
 const isFull = r => !isFree(r) && (r.status !== "lobby" || r.players.length >= r.need);
-const freshRoom = game => ({ game, need: G[game].minP, host: user.uid, status: "lobby", players: [me()], memberIds: [user.uid], state: null, createdAt: Date.now(), updatedAt: Date.now() });
+const freshRoom = game => ({ game, need: G[game].flexible ? G[game].maxP : G[game].minP, host: user.uid, status: "lobby", players: [me()], memberIds: [user.uid], state: null, createdAt: Date.now(), updatedAt: Date.now() });
 
 function renderRooms(pre){
   if (needLogin("Đăng nhập bằng Google để vào phòng chơi cùng bạn bè.")) return;
   const keys = ONLINE();
   main.innerHTML = `<div class="count"><span class="tag">PHÒNG CHƠI</span><small>Mỗi trò có sẵn ${FIXED} phòng. Khi cả ${FIXED} phòng đều đủ người, bạn mở thêm phòng mới.</small></div>` +
-    keys.map(k => `<section id="sec-${k}"><div class="sec">${esc(G[k].name.toUpperCase())}</div><p class="hint">${esc(G[k].desc)} Mỗi phòng ${G[k].minP} người.</p><div class="playlist" id="rl-${k}"><p>Đang tải phòng.</p></div></section>`).join("");
+    keys.map(k => `<section id="sec-${k}"><div class="sec">${esc(G[k].name.toUpperCase())}</div><p class="hint">${esc(G[k].desc)} Mỗi phòng ${G[k].flexible ? `từ ${G[k].minP} đến ${G[k].maxP}` : G[k].minP} người.</p><div class="playlist" id="rl-${k}"><p>Đang tải phòng.</p></div></section>`).join("");
   const draw = rooms => keys.forEach(k => {
     const ids = Array.from({length:FIXED}, (_, i) => `${k}-${i + 1}`);
     Object.keys(rooms).filter(id => gameOf(id) === k && !ids.includes(id) && !isFree(rooms[id])).forEach(id => ids.push(id));
@@ -301,7 +312,7 @@ function renderRoom(code){
 function drawRoom(code, r){
   const g = G[r.game], seat = r.players.findIndex(p => p.uid === user.uid), host = r.host === user.uid;
   const link = location.origin + location.pathname + "#room-" + code;
-  const plist = `<ul class="plist">${r.players.map((p,i)=>`<li>${p.photo?`<img src="${esc(p.photo)}" alt="">`:`<span class="av"></span>`}<span>${esc(p.name)}${p.uid===r.host?" · chủ phòng":""}</span><span class="rd ${p.ready?"on":""}">${r.status==="lobby"?(p.ready?"Sẵn sàng":"Chưa sẵn sàng"):"Ghế "+(i+1)}</span></li>`).join("")}${Array.from({length:Math.max(0,r.need-r.players.length)}).map(()=>`<li><span class="av"></span><span class="hint">Đang chờ người vào</span></li>`).join("")}</ul>`;
+  const plist = `<ul class="plist">${r.players.map((p,i)=>`<li>${p.photo?`<img src="${esc(p.photo)}" alt="">`:`<span class="av"></span>`}<span>${esc(p.name)}${p.uid===r.host?" · chủ phòng":""}</span><span class="rd ${p.ready?"on":""}">${r.status==="lobby"?(p.ready?"Sẵn sàng":"Chưa sẵn sàng"):"Ghế "+(i+1)}</span></li>`).join("")}${g && g.flexible ? (r.need>r.players.length ? `<li><span class="av"></span><span class="hint">Còn ${r.need-r.players.length} chỗ trống</span></li>` : "") : Array.from({length:Math.max(0,r.need-r.players.length)}).map(()=>`<li><span class="av"></span><span class="hint">Đang chờ người vào</span></li>`).join("")}</ul>`;
   const side = `<div class="panel"><h3>${esc(roomLabel(code).toUpperCase())}</h3><p class="hint">Gửi đường link này cho bạn bè để vào đúng phòng.</p>
      <div class="lcdrow" style="justify-content:flex-start"><button class="btn" id="cp">Chép link mời</button></div>
      <h3 style="margin-top:14px">${r.players.length}/${r.need} NGƯỜI</h3>${plist}
@@ -309,9 +320,9 @@ function drawRoom(code, r){
      ${seat>=0 ? `<div class="lcdrow" style="justify-content:flex-start"><button class="btn danger" id="leave">Rời phòng</button></div>` : ""}</div>`;
   let mainCol;
   if (r.status === "lobby") {
-    const full = r.players.length === r.need, allReady = full && r.players.every(p => p.ready);
+    const flex = g && g.flexible, enough = flex ? r.players.length >= g.minP : r.players.length === r.need, full = enough, allReady = enough && r.players.every(p => p.ready);
     mainCol = `<div class="panel"><h3>${esc(g?.name||r.game)}</h3><p>${esc(g?.desc||"")}</p>
-      <div class="note">Phòng cần đúng ${r.need} người. ${full ? (allReady ? "Đủ người và mọi người đã sẵn sàng." : "Đã đủ người, chờ mọi người bấm Sẵn sàng.") : `Còn thiếu ${r.need - r.players.length} người.`}</div>
+      <div class="note">${flex ? `Phòng nhận từ ${g.minP} đến ${r.need} người, có ${r.players.length} người.` : `Phòng cần đúng ${r.need} người.`} ${full ? (allReady ? "Đủ người và mọi người đã sẵn sàng." : "Đã đủ người, chờ mọi người bấm Sẵn sàng.") : `Còn thiếu ${r.need - r.players.length} người.`}</div>
       <div class="lcdrow" style="justify-content:flex-start">${seat>=0?`<button class="btn" id="ready">${r.players[seat].ready?"Bỏ sẵn sàng":"Sẵn sàng"}</button>`:""}
       ${host?`<button class="btn primary" id="start" ${allReady?"":"disabled"}>Bắt đầu chơi</button>`:`<span class="hint">Chủ phòng sẽ bấm bắt đầu khi đủ người.</span>`}</div></div>`;
   } else {
@@ -330,7 +341,7 @@ function drawRoom(code, r){
   };
   if ($("#ready")) $("#ready").onclick = () => txRoom(code, x => ({ players: x.players.map(p => p.uid === user.uid ? {...p, ready:!p.ready} : p) })).catch(e=>toast(e.message));
   if ($("#start")) $("#start").onclick = () => txRoom(code, x => {
-    if (x.players.length !== x.need) throw new Error("Phòng chưa đủ " + x.need + " người.");
+    const gx = G[x.game]; if (gx.flexible ? x.players.length < gx.minP : x.players.length !== x.need) throw new Error("Phòng chưa đủ người.");
     if (!x.players.every(p => p.ready)) throw new Error("Còn người chưa sẵn sàng.");
     return { status:"playing", state: G[x.game].init(x.players) };
   }).catch(e=>toast(e.message));
