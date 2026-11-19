@@ -50,7 +50,7 @@ async function loadGames(){
   try { const r = await fetch("games.json", {cache:"no-cache"}); const j = await r.json(); if (!fromStore) { games = j; loaded = true; refresh(); } }
   catch (e) { loaded = true; refresh(); }
 }
-function refresh(){ if (view === "" || view === "all") renderResults(); else if (!view.startsWith("play-") && !view.startsWith("local-") && !view.startsWith("room-")) route(); }
+function refresh(){ if (view === "" || view === "all") renderResults(); else if (!view.startsWith("play-") && !view.startsWith("local-") && !view.startsWith("room-") && !view.startsWith("score-")) route(); }
 const sortKey = g => [g.season===0?9:g.season, typeof g.order==="number"?g.order:9999, g.name||""];
 const sorted = l => [...l].sort((a,b)=>{const x=sortKey(a),y=sortKey(b); for(let i=0;i<3;i++){ if(x[i]<y[i])return -1; if(x[i]>y[i])return 1;} return 0;});
 
@@ -69,6 +69,7 @@ function route(){
   if (h.startsWith("local-")) return renderLocal(h.slice(6));
   if (h === "rooms" || h.startsWith("rooms-")) return renderRooms(h.slice(6));
   if (h.startsWith("room-")) return renderRoom(h.slice(5));
+  if (h.startsWith("score-")) return renderScore(h.slice(6));
   renderList();
 }
 
@@ -148,7 +149,8 @@ function renderDetail(id){
         <div class="label"><div class="num"><span class="tag">${esc(g.num||"")}</span><span class="tag">${esc(s.name.toUpperCase())}</span></div><h3>${esc(g.name)}</h3></div>
         <div class="card"><dl><dt>Nhóm</dt><dd>${esc(s.long)}</dd><dt>Loại</dt><dd>${esc(TYPES[g.type]||"Boardgame")}</dd>${g.players?`<dt>Người chơi</dt><dd>${esc(g.players)}</dd>`:""}</dl></div>
         ${playButtons(g.playable||[])}
-        ${(g.playable||[]).length ? "" : `<div class="note">Trò này là thiết kế riêng của chương trình nên trang chỉ có phần hướng dẫn.</div>`}
+        ${SCORE_TOOLS[g.id] ? `<button class="btn primary" data-go="score-${SCORE_TOOLS[g.id]}">Bảng tính điểm khi chơi ngoài đời</button>` : ""}
+        ${(g.playable||[]).length ? "" : `<div class="note">Trò này là thiết kế riêng của chương trình nên trang không có bản chơi online.${SCORE_TOOLS[g.id] ? " Cả nhóm chơi bằng thẻ thật, trang giúp ghi điểm." : ""}</div>`}
         ${isAdmin?`<button class="btn" id="edit">Sửa game này</button>`:""}
       </aside>
     </div>`;
@@ -202,6 +204,12 @@ function shell(title, back, links){
   bindGo(); return $("#screen");
 }
 const ruleLinks = key => linkedGames(key).map(g=>`<a href="#g-${esc(g.id)}">Luật ${esc(g.name)}</a>`).join(" · ");
+const SCORE_TOOLS = { "s3-heavy-13": "heavy13" };
+function renderScore(key){
+  const t = window.TLC_SCORE && window.TLC_SCORE[key]; if (!t) return renderList();
+  main.innerHTML = `<button class="btn back" data-go="g-s3-heavy-13">Về luật Heavy 13</button><div class="count"><span class="tag">${esc(t.name.toUpperCase())}</span><small>Ván đang ghi được lưu trên máy này.</small></div><div id="score"></div>`;
+  bindGo(); cleanup = t.mount($("#score"));
+}
 function renderSolo(key){ const g = G[key]; if (!g || g.kind !== "solo") return renderPlayList(); const el = shell(g.name, "play", ruleLinks(key)); cleanup = g.mount(el); }
 
 /* ---------- local hotseat ---------- */

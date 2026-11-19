@@ -205,3 +205,18 @@ footer .torn{background:var(--paper-2);transform:scaleY(-1);margin:0 -28px 10px;
 .form-row input,.form-row select{border:2px solid var(--ink);background:#fff;padding:7px 8px;font-size:15px}
 .note{background:var(--paper-2);border-left:6px solid var(--s0);padding:10px 14px;margin:12px 0}
 @media (max-width:760px){.room{grid-template-columns:1fr}.pair{grid-template-columns:1fr}.honey{grid-template-columns:repeat(4,52px)}.honey .hex{width:52px;height:48px;font-size:22px}}
+
+/* bảng tính điểm */
+.tbl{overflow-x:auto}
+.sheet-t{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.sheet-t th,.sheet-t td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.sheet-t th{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.sheet-t tr.first td{font-weight:700}
+.sheet-t select{border:2px solid var(--ink);background:#fff;padding:3px 4px;font-size:14px}
+.stands{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.stand{display:flex;flex-direction:column;align-items:center;gap:6px}
+.pile{display:flex;flex-wrap:wrap-reverse;justify-content:center;gap:4px;min-height:84px;align-content:flex-start}
+.rock{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:#cdd1da;border:2px solid var(--ink);font-family:var(--pixel);font-size:24px}
+.sbox{width:100%;text-align:center;color:#fff;font-weight:700;padding:14px 4px;border:3px solid var(--ink)}
+.st-r .sbox{background:var(--s1)}.st-g .sbox{background:var(--s3)}.st-b .sbox{background:#4a72c0}
+.stot{font-family:var(--pixel);font-size:24px}
