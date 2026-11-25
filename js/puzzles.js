@@ -56,6 +56,7 @@ function sdMake(level) {
 }
 G.sudoku = { kind: "solo", name: "Sudoku", desc: "Điền số từ 1 đến 9 vào bảng 9 x 9. Mỗi hàng, mỗi cột và mỗi khối 3 x 3 có đủ 9 số, không số nào lặp lại.",
   mount(el) {
+    el.classList.add("sdwhite");
     el.innerHTML = `<div class="score"><span id="sd-lv">MỨC VỪA</span><span id="sd-t">00:00</span><span id="sd-err">0 LỖI</span></div>
       <div class="sdk" id="sd-b" role="grid" aria-label="Bảng Sudoku"></div>
       <div class="sdpad" id="sd-pad">${[1,2,3,4,5,6,7,8,9].map(d => `<button class="lcdbtn" data-d="${d}">${d}</button>`).join("")}<button class="lcdbtn" data-d="0">XÓA</button></div>
@@ -137,7 +138,7 @@ G.sudoku = { kind: "solo", name: "Sudoku", desc: "Điền số từ 1 đến 9 v
     T.list.push(setInterval(() => { if (s && !s.done && !document.hidden) { s.sec++; $("#sd-t", el).textContent = mmss(s.sec); if (s.sec % 10 === 0) save(); } }, 1000));
     const old = store.get(KEY);
     if (old && old.sol && !old.done) { s = old; draw(); $("#sd-msg", el).textContent = "Đang chơi tiếp ván lần trước."; } else fresh("vua");
-    return () => { clear(); document.removeEventListener("keydown", onKey); if (s) save(); };
+    return () => { clear(); el.classList.remove("sdwhite"); document.removeEventListener("keydown", onKey); if (s) save(); };
   } };
 
 /* ================= SOLO: Truy án ô vuông (giải đố kiểu Murdoku) =================

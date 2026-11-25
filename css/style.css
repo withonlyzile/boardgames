@@ -259,17 +259,31 @@ input,select,textarea,.lcdinput,.chatform input,.form-row input,form.ed input,fo
 
 /* ---------- giải đố: Sudoku, Truy án ô vuông, Ô chữ ---------- */
 .lcdbtn.on{background:var(--lcd-ink);color:var(--lcd)}
-.sdk{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));max-width:430px;margin:8px auto;border:3px solid var(--lcd-ink);background:var(--lcd-ink);gap:1px}
-.sdc{aspect-ratio:1;border:0;background:#f4f7e8;font-family:var(--pixel);font-size:clamp(20px,6vw,30px);color:#2f5fb3;padding:0;min-width:0;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative}
-.sdc.given{color:var(--lcd-ink);background:#e6ecd3}
-.sdc.br{border-right:3px solid var(--lcd-ink)}.sdc.bb{border-bottom:3px solid var(--lcd-ink)}
-.sdc.peer{background:#dfe8c6}.sdc.same{background:#c3d39f}
-.sdc.sel{background:#9fb08a;outline:3px solid var(--sky-dk);outline-offset:-3px;z-index:1}
-.sdc.bad{color:var(--bad);background:#f6d5cf}
-.sdc .nt{display:grid;grid-template-columns:repeat(3,1fr);width:100%;height:100%;padding:1px}
-.sdc .nt i{font-style:normal;font-size:clamp(9px,2.4vw,12px);line-height:1;display:flex;align-items:center;justify-content:center;color:var(--ink-2);font-family:var(--body)}
-.sdpad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:430px;margin:10px auto 0}
-.sdpad .lcdbtn{font-size:26px;padding:4px 0}
+/* Sudoku: nền trắng, kẻ mảnh xám, khối 3 x 3 kẻ đậm, số xanh, hàng cột tô xanh, ô đang chọn tô hồng */
+.sdk{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));max-width:440px;margin:8px auto;border:2.5px solid #3a3d48;background:#fff;gap:0}
+.sdc{aspect-ratio:1;border:0;border-right:1px solid #b9bcc6;border-bottom:1px solid #b9bcc6;background:#fff;font-family:"Be Vietnam Pro",system-ui,sans-serif;font-weight:400;font-size:clamp(19px,5.6vw,28px);color:#4a5bd4;padding:0;min-width:0;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;line-height:1}
+.sdc:nth-child(9n){border-right:0}.sdc:nth-child(n+73){border-bottom:0}
+.sdc.given{color:#3442c4}
+.sdc:not(.given){color:#7088f2}
+.sdc.bad{color:#d1342f}
+.screen.sdwhite{background:#fff;color:#3a3d48}
+.screen.sdwhite .lcdbtn{border-color:#3a3d48;color:#3a3d48}
+.screen.sdwhite .lcdbtn:hover{background:#3a3d48;color:#fff}
+.screen.sdwhite .sdpad .lcdbtn{color:#4a5bd4;border-color:#b9bcc6}
+.screen.sdwhite .sdpad .lcdbtn:hover{background:#d3ddfb;color:#2c3270}
+.screen.sdwhite .sdpad .lcdbtn[data-d="0"]{color:#3a3d48}
+.sdc.br{border-right:2.5px solid #3a3d48}.sdc.bb{border-bottom:2.5px solid #3a3d48}
+.sdc.peer{background:#9fb6f3}
+.sdc.same{background:#d3ddfb}
+.sdc.sel{background:#f9b4bb}
+.sdc.bad{color:#d1342f}
+.sdc.bad.sel{background:#f6a1a8}
+.sdc .nt{display:grid;grid-template-columns:repeat(3,1fr);width:100%;height:100%;padding:2px}
+.sdc .nt i{font-style:normal;font-size:clamp(8px,2.3vw,11px);line-height:1;display:flex;align-items:center;justify-content:center;color:#6b7090}
+.sdpad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:440px;margin:10px auto 0}
+.sdpad .lcdbtn{font-family:"Be Vietnam Pro",system-ui,sans-serif;font-size:22px;padding:6px 0;background:#fff;color:#4a5bd4;border:1.5px solid #b9bcc6;border-radius:6px}
+.sdpad .lcdbtn:hover{background:#d3ddfb;color:#2c3270}
+.sdpad .lcdbtn[data-d="0"]{font-size:15px;font-weight:600;color:#3a3d48}
 .mdbook{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.3fr);gap:16px;align-items:start;margin-top:8px;background:#e7dcf3;border:2px solid var(--lcd-ink);padding:12px;border-radius:6px}
 .mdcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;align-content:start}
 .mdcard{display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:transparent;cursor:pointer;padding:0;font-family:var(--body);color:var(--ink)}
@@ -323,5 +337,5 @@ input,select,textarea,.lcdinput,.chatform input,.form-row input,form.ed input,fo
 @media (max-width:480px){
   .console{padding:10px 8px 16px;border-radius:14px 14px 32px 14px}
   .screen{border-width:5px;padding:8px 6px}
-  .sdpad .lcdbtn{font-size:24px}
+  .sdpad .lcdbtn{font-size:20px}
 }
