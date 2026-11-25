@@ -80,15 +80,18 @@ G.sudoku = { kind: "solo", name: "Sudoku", desc: "Điền số từ 1 đến 9 v
       if (!s) return;
       const b = $("#sd-b", el), sv = sel >= 0 ? s.val[sel] : 0;
       const conflict = i => { const v = s.val[i]; if (!v) return false; for (let j = 0; j < 81; j++) if (j !== i && s.val[j] === v && (Math.floor(j / 9) === Math.floor(i / 9) || j % 9 === i % 9 || box(j) === box(i))) return true; return false; };
-      b.innerHTML = s.val.map((v, i) => {
+      if (b.children.length !== 81) b.innerHTML = s.val.map((_, i) => `<button class="sdc" data-i="${i}"></button>`).join("");
+      s.val.forEach((v, i) => {
         const cls = ["sdc"]; if (s.puz[i]) cls.push("given"); if (i === sel) cls.push("sel");
         else if (sel >= 0 && (Math.floor(i / 9) === Math.floor(sel / 9) || i % 9 === sel % 9 || box(i) === box(sel))) cls.push("peer");
         if (v && sv && v === sv && i !== sel) cls.push("same");
         if (!s.puz[i] && v && (v !== s.sol[i] || conflict(i))) cls.push("bad");
         if (i % 9 === 2 || i % 9 === 5) cls.push("br"); if (Math.floor(i / 9) === 2 || Math.floor(i / 9) === 5) cls.push("bb");
         const inner = v ? v : s.notes[i] ? `<span class="nt">${[1,2,3,4,5,6,7,8,9].map(d => `<i>${s.notes[i] & (1 << d) ? d : ""}</i>`).join("")}</span>` : "";
-        return `<button class="${cls.join(" ")}" data-i="${i}" aria-label="Hàng ${Math.floor(i / 9) + 1} cột ${i % 9 + 1}${v ? ", số " + v : ", trống"}">${inner}</button>`;
-      }).join("");
+        const c = b.children[i], cn = cls.join(" "), key = v ? "v" + v : "n" + s.notes[i];
+        if (c.className !== cn) c.className = cn;
+        if (c._k !== key) { c._k = key; c.innerHTML = inner; c.setAttribute("aria-label", `Hàng ${Math.floor(i / 9) + 1} cột ${i % 9 + 1}${v ? ", số " + v : ", trống"}`); }
+      });
       $("#sd-lv", el).textContent = "MỨC " + SD_LEVELS[s.level].name.toUpperCase();
       $("#sd-err", el).textContent = s.err + " LỖI"; $("#sd-t", el).textContent = mmss(s.sec);
       el.querySelectorAll("#sd-pad [data-d]").forEach(btn => { const d = +btn.dataset.d; if (d) btn.disabled = s.val.filter(x => x === d).length >= 9; });
@@ -346,6 +349,14 @@ function mdItemSVG(L, i, x, y, S) {
   }
   return "";
 }
+// Lớp quân cờ và dấu X, vẽ lại mỗi lần chạm. Phần sơ đồ còn lại chỉ vẽ một lần mỗi vụ.
+function mdTokens(L, st) {
+  const n = L.n, S = 64, ppl = st.people; let s = "";
+  for (let i = 0; i < n * n; i++) { const x = (i % n) * S, y = Math.floor(i / n) * S, who = st.place.indexOf(i);
+    if (who >= 0) s += `<g class="mdtok"><circle cx="${x + S / 2}" cy="${y + S / 2 - 2}" r="19" fill="${who === n - 1 ? "#c23b3b" : MD_TOKEN[who]}" stroke="#fff" stroke-width="3"/><text x="${x + S / 2}" y="${y + S / 2 + 6}" text-anchor="middle">${esc(ppl[who].name[0])}</text></g>`;
+    else if (st.marks.has(i)) s += `<text x="${x + S / 2}" y="${y + S / 2 + 10}" text-anchor="middle" class="mdxm">×</text>`; }
+  return s;
+}
 function mdBoardSVG(L, id, st) {
   const n = L.n, S = 64, M = 26, W = n * S + 2 * M, ppl = st.people;
   let s = `<svg viewBox="0 0 ${W} ${W}" class="mdsvg" role="img" aria-label="Sơ đồ căn nhà ${n} x ${n}"><defs>${mdFloorDefs(id, L)}</defs><g transform="translate(${M} ${M})">`;
@@ -365,9 +376,8 @@ function mdBoardSVG(L, id, st) {
     const vert = need > x.w * S - 6 && x.h * S > x.w * S, tw = Math.min((vert ? x.h : x.w) * S - 8, need);
     const cx = vert ? (x.c + x.w) * S - 12 : x.c * S + x.w * S / 2, cy = vert ? x.r * S + x.h * S / 2 : (x.r + x.h) * S - 12.5;
     s += `<g class="mdlabel"${vert ? ` transform="rotate(-90 ${cx} ${cy})"` : ""}><rect x="${cx - tw / 2}" y="${cy - 8.5}" width="${tw}" height="17" rx="8.5"/><text x="${cx}" y="${cy + 4}" text-anchor="middle">${esc(label)}</text></g>`; });
-  for (let i = 0; i < n * n; i++) { const x = (i % n) * S, y = Math.floor(i / n) * S, who = st.place.indexOf(i);
-    if (who >= 0) s += `<g class="mdtok"><circle cx="${x + S / 2}" cy="${y + S / 2 - 2}" r="19" fill="${who === n - 1 ? "#c23b3b" : MD_TOKEN[who]}" stroke="#fff" stroke-width="3"/><text x="${x + S / 2}" y="${y + S / 2 + 6}" text-anchor="middle">${esc(ppl[who].name[0])}</text></g>`;
-    else if (st.marks.has(i)) s += `<text x="${x + S / 2}" y="${y + S / 2 + 10}" text-anchor="middle" class="mdxm">×</text>`;
+  s += `<g class="mddyn">${mdTokens(L, st)}</g>`;
+  for (let i = 0; i < n * n; i++) { const x = (i % n) * S, y = Math.floor(i / n) * S;
     s += `<rect x="${x}" y="${y}" width="${S}" height="${S}" fill="transparent" class="mdhit" data-i="${i}"><title>Ô ${COLS[i % n]}${Math.floor(i / n) + 1}</title></rect>`; }
   for (let c = 0; c < n; c++) s += `<text x="${c * S + S / 2}" y="-12" text-anchor="middle" class="mdcoord">${COLS[c]}</text>`;
   for (let r = 0; r < n; r++) s += `<text x="-17" y="${r * S + S / 2 + 4}" text-anchor="middle" class="mdcoord">${r + 1}</text>`;
@@ -398,14 +408,24 @@ G.murdoku = { kind: "solo", name: "Truy án ô vuông", desc: "Giải đố ki�
       setTimeout(() => { const p = mdMake(n); if (!p) { $("#md-msg", el).textContent = "Chưa tạo được vụ án, bấm lần nữa."; return; }
         start({ P: p }); save(); $("#md-msg", el).textContent = `Bấm vào thẻ một người rồi bấm vào ô trên sơ đồ để đặt người đó.`; }, 20);
     }
+    let drawnFor = null;
     function draw() {
       const n = P.n;
-      $("#md-n", el).textContent = `VỤ ÁN ${n} x ${n} · ${n} NGƯỜI`;
-      $("#md-cards", el).innerHTML = st.people.map((p, k) => `<button class="mdcard${k === st.cur && !xMode ? " on" : ""}${p.victim ? " victim" : ""}" data-p="${k}">
-        <span class="mdpic">${mdAvatar(p)}</span><span class="mdname">${esc(p.name)}${st.place[k] >= 0 ? ` <small>${COLS[st.place[k] % n]}${Math.floor(st.place[k] / n) + 1}</small>` : ""}</span>
-        <span class="mdsay">${p.victim ? "<b>NẠN NHÂN</b> " : ""}${esc(mdCardText(P, P.cards[k]))}</span></button>`).join("");
-      $("#md-b", el).innerHTML = mdBoardSVG(P, id, { ...st, done: st.done });
-      $("#md-acc", el).innerHTML = st.people.slice(0, n - 1).map((p, k) => `<button class="lcdbtn${st.accused === k ? " on" : ""}" data-a="${k}" aria-pressed="${st.accused === k}">${esc(p.name.toUpperCase())}</button>`).join("");
+      if (drawnFor !== P) {
+        // vụ mới: vẽ thẻ, sơ đồ và nút buộc tội một lần
+        drawnFor = P;
+        $("#md-n", el).textContent = `VỤ ÁN ${n} x ${n} · ${n} NGƯỜI`;
+        $("#md-cards", el).innerHTML = st.people.map((p, k) => `<button class="mdcard${p.victim ? " victim" : ""}" data-p="${k}">
+          <span class="mdpic">${mdAvatar(p)}</span><span class="mdname">${esc(p.name)} <small></small></span>
+          <span class="mdsay">${p.victim ? "<b>NẠN NHÂN</b> " : ""}${esc(mdCardText(P, P.cards[k]))}</span></button>`).join("");
+        $("#md-b", el).innerHTML = mdBoardSVG(P, id, st);
+        $("#md-acc", el).innerHTML = st.people.slice(0, n - 1).map((p, k) => `<button class="lcdbtn" data-a="${k}">${esc(p.name.toUpperCase())}</button>`).join("");
+      } else $(".mddyn", el).innerHTML = mdTokens(P, st);
+      el.querySelectorAll(".mdcard").forEach((c, k) => {
+        c.classList.toggle("on", k === st.cur && !xMode);
+        c.querySelector("small").textContent = st.place[k] >= 0 ? `${COLS[st.place[k] % n]}${Math.floor(st.place[k] / n) + 1}` : "";
+      });
+      el.querySelectorAll("#md-acc [data-a]").forEach((b, k) => { b.classList.toggle("on", st.accused === k); b.setAttribute("aria-pressed", String(st.accused === k)); });
       $("#md-t", el).textContent = mmss(st.sec);
     }
     el.addEventListener("click", e => {
@@ -536,7 +556,7 @@ G.crossword = { kind: "solo", name: "Ô chữ", desc: "Đọc gợi ý hàng nga
     const wordAt = (r, c, d) => P.words.find(w => (d === 0 ? w.dc : w.dr) && [...w.w].some((_, k) => w.r + w.dr * k === r && w.c + w.dc * k === c));
     function fresh(size) {
       P = cwBuild(size); val = P.sol.map(row => row.map(() => "")); dir = 0; cur = null; sec = 0; done = false; wrong = new Set();
-      const b = $("#cw-b", el); b.style.gridTemplateColumns = `repeat(${P.W}, minmax(0, 1fr))`; b.style.maxWidth = Math.min(460, P.W * 42) + "px";
+      const b = $("#cw-b", el); b.style.gridTemplateColumns = `repeat(${P.W}, minmax(0, 1fr))`; b.style.maxWidth = Math.min(580, P.W * 52) + "px";
       const nums = {}; P.words.forEach(w => nums[w.r + "," + w.c] = w.num);
       b.innerHTML = P.sol.map((row, r) => row.map((ch, c) => ch
         ? `<label class="cwc" data-r="${r}" data-c="${c}">${nums[r + "," + c] ? `<sup>${nums[r + "," + c]}</sup>` : ""}<input maxlength="2" autocomplete="off" autocapitalize="characters" spellcheck="false" data-r="${r}" data-c="${c}" aria-label="Hàng ${r + 1} cột ${c + 1}"></label>`

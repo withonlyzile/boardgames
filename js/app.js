@@ -1,5 +1,5 @@
 (() => {
-const APP_V = 14; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
+const APP_V = 15; // tăng mỗi lần đổi luật chơi, máy nào chạy bản cũ sẽ được nhắc tải lại
 // Tự lấy bản mới: GitHub giữ bản cũ trong bộ nhớ đệm khoảng 10 phút, nên trang tự hỏi số phiên bản mới nhất.
 async function checkVersion(){
   try {
