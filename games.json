@@ -1196,5 +1196,96 @@
   "playable": [
    "werewolf"
   ]
+ },
+ {
+  "id": "s0-sudoku",
+  "num": "0.3",
+  "name": "Sudoku",
+  "nameEn": "Sudoku",
+  "season": 0,
+  "type": "other",
+  "players": "1",
+  "order": 3,
+  "body": [
+   {
+    "t": "p",
+    "x": "Bảng có 9 hàng, 9 cột và 9 khối 3 x 3. Một số ô đã có số sẵn, bạn điền số từ 1 đến 9 vào các ô trống."
+   },
+   {
+    "t": "p",
+    "x": "Mỗi hàng, mỗi cột và mỗi khối phải có đủ 9 số, không số nào lặp lại. Mỗi đề trên web chỉ có một lời giải."
+   },
+   {
+    "t": "p",
+    "x": "Trên web có 3 mức Dễ, Vừa và Khó. Bật ghi chú để viết nháp nhiều số nhỏ trong một ô. Ván đang chơi được lưu lại trên máy."
+   }
+  ],
+  "meta": "Trò giải đố số cho một người.",
+  "source": "Trò giải đố",
+  "playable": [
+   "sudoku"
+  ]
+ },
+ {
+  "id": "s0-murdoku",
+  "num": "0.4",
+  "name": "Truy án ô vuông",
+  "nameEn": "Kiểu Murdoku",
+  "season": 0,
+  "type": "other",
+  "players": "1",
+  "order": 4,
+  "body": [
+   {
+    "t": "p",
+    "x": "Căn nhà vẽ thành bảng ô vuông, chia ra nhiều phòng. Mỗi ô có thể có ghế, thảm, chậu cây hoặc tủ."
+   },
+   {
+    "t": "p",
+    "x": "Bạn xếp từng người vào một ô sao cho mỗi hàng và mỗi cột có đúng một người. Không ai đứng ở ô có chậu cây hay tủ. Mọi lời khai đều phải đúng."
+   },
+   {
+    "t": "p",
+    "x": "Trong phòng của nạn nhân chỉ có thêm một người, đó là hung thủ. Xếp xong thì chọn hung thủ và bấm kiểm tra."
+   },
+   {
+    "t": "p",
+    "x": "Trên web có nhà 5 x 5 với 5 người và nhà 6 x 6 với 6 người. Mỗi ván được tạo mới và chỉ có một cách xếp đúng."
+   }
+  ],
+  "meta": "Trò giải đố phá án cho một người.",
+  "source": "Trò giải đố",
+  "playable": [
+   "murdoku"
+  ]
+ },
+ {
+  "id": "s0-o-chu",
+  "num": "0.5",
+  "name": "Ô chữ",
+  "nameEn": "Crossword",
+  "season": 0,
+  "type": "other",
+  "players": "1",
+  "order": 5,
+  "body": [
+   {
+    "t": "p",
+    "x": "Mỗi từ có một gợi ý, xếp theo hàng ngang hoặc hàng dọc. Số trên ô cho biết từ bắt đầu ở đâu."
+   },
+   {
+    "t": "p",
+    "x": "Bạn gõ đáp án không dấu, mỗi ô một chữ cái. Bấm vào ô đang chọn để đổi giữa hàng ngang và hàng dọc."
+   },
+   {
+    "t": "p",
+    "x": "Trên web có ô chữ nhỏ 8 từ và ô chữ lớn 12 từ. Bạn mở được từng chữ khi bí, hoặc xem cả đáp án."
+   }
+  ],
+  "meta": "Trò giải đố chữ cho một người.",
+  "source": "Trò giải đố",
+  "playable": [
+   "crossword"
+  ]
  }
 ]
