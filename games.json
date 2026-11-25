@@ -1238,11 +1238,15 @@
   "body": [
    {
     "t": "p",
-    "x": "Căn nhà vẽ thành bảng ô vuông, chia ra nhiều phòng. Mỗi ô có thể có ghế, thảm, chậu cây hoặc tủ."
+    "x": "Mỗi vụ án là sơ đồ một căn nhà chia thành nhiều phòng. Trong nhà có cửa sổ, giường, ghế, thảm, bàn, tủ sách và cây cảnh."
    },
    {
     "t": "p",
-    "x": "Bạn xếp từng người vào một ô sao cho mỗi hàng và mỗi cột có đúng một người. Không ai đứng ở ô có chậu cây hay tủ. Mọi lời khai đều phải đúng."
+    "x": "Mỗi người có một tấm thẻ lời khai, ví dụ đứng trước cửa sổ hoặc ngồi trên ghế. Nạn nhân thường ở ô còn lại cuối cùng."
+   },
+   {
+    "t": "p",
+    "x": "Bạn xếp từng người vào một ô sao cho mỗi hàng và mỗi cột có đúng một người. Không ai đứng ở ô có bàn, tủ sách hay cây cảnh."
    },
    {
     "t": "p",
@@ -1250,7 +1254,7 @@
    },
    {
     "t": "p",
-    "x": "Trên web có nhà 5 x 5 với 5 người và nhà 6 x 6 với 6 người. Mỗi ván được tạo mới và chỉ có một cách xếp đúng."
+    "x": "Trên web có vụ 4 x 4, 5 x 5 và 6 x 6. Mỗi vụ được tạo mới, chỉ có một cách xếp đúng. Vụ đang làm được lưu lại trên máy."
    }
   ],
   "meta": "Trò giải đố phá án cho một người.",

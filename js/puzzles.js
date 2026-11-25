@@ -7,6 +7,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const rnd = n => Math.floor(Math.random() * n);
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const mmss = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+const dur = s => (s >= 60 ? `${Math.floor(s / 60)} phút ` : "") + `${s % 60} giây`;
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
@@ -105,7 +106,7 @@ G.sudoku = { kind: "solo", name: "Sudoku", desc: "Điền số từ 1 đến 9 v
           $("#sd-msg", el).textContent = "";
         }
       }
-      if (s.val.every((v, i) => v === s.sol[i])) { s.done = true; $("#sd-msg", el).textContent = `Xong bảng ${SD_LEVELS[s.level].name.toLowerCase()} trong ${mmss(s.sec)} với ${s.err} lỗi.`; }
+      if (s.val.every((v, i) => v === s.sol[i])) { s.done = true; $("#sd-msg", el).textContent = `Xong bảng ${SD_LEVELS[s.level].name.toLowerCase()} trong ${dur(s.sec)} với ${s.err} lỗi.`; }
       save(); draw();
     }
     el.addEventListener("click", e => {
@@ -139,232 +140,306 @@ G.sudoku = { kind: "solo", name: "Sudoku", desc: "Điền số từ 1 đến 9 v
     return () => { clear(); document.removeEventListener("keydown", onKey); if (s) save(); };
   } };
 
-/* ================= SOLO: Truy án ô vuông (giải đố kiểu Murdoku) ================= */
-const MD_ROOMS = ["Bếp", "Phòng khách", "Thư viện", "Phòng ngủ", "Vườn", "Hầm rượu"];
-const MD_COLORS = ["#f3cf9a", "#c9e0a6", "#b4d3ea", "#ebbfd3", "#d4c8ef", "#a9ddd2"];
-const MD_PEOPLE = [
-  { name: "An", col: "#2f6fd6" }, { name: "Bình", col: "#1e9c8f" }, { name: "Chi", col: "#7b55d1" },
-  { name: "Dũng", col: "#c26b12" }, { name: "Giang", col: "#566012" }
+/* ================= SOLO: Truy án ô vuông (giải đố kiểu Murdoku) =================
+   Luật: mỗi hàng, mỗi cột có đúng một người. Không ai đứng ở ô có cây, bàn hay tủ.
+   Mỗi người có một tấm thẻ lời khai. Nạn nhân thường ở ô còn lại cuối cùng.
+   Hung thủ là người duy nhất ở cùng phòng với nạn nhân. Hình vẽ do trang tự vẽ bằng SVG. */
+const COLS = "ABCDEFGH";
+const MD_SUSPECTS = [
+  { name: "An", bg: "#d9784f", hair: "#2b1d16", hs: 0, shirt: "#7fa86b", skin: "#f1b98d" },
+  { name: "Bình", bg: "#3f8f6a", hair: "#8c3b22", hs: 2, shirt: "#9b86c9", skin: "#eab48a" },
+  { name: "Chi", bg: "#3f8fa0", hair: "#d0662a", hs: 3, shirt: "#2c2c34", skin: "#f3c39c" },
+  { name: "Dũng", bg: "#5a6fc0", hair: "#e8cf4a", hs: 1, shirt: "#2f4f8a", skin: "#eeb487" },
+  { name: "Giang", bg: "#5c4a86", hair: "#6b4a2f", hs: 4, shirt: "#c8b590", skin: "#e9b08a" }
 ];
-const MD_VICTIM = { name: "Lâm", col: "#c23b3b" };
-// Đồ vật: block = không ai đứng được ở ô đó.
-const MD_OBJ = {
-  cay: { icon: "🪴", label: "chậu cây", block: true, near: "sát một chậu cây" },
-  tu: { icon: "🗄️", label: "tủ", block: true, near: "sát một cái tủ" },
-  ghe: { icon: "🪑", label: "ghế", block: false, on: "ngồi trên ghế", near: "sát một cái ghế" },
-  tham: { icon: "", label: "thảm", block: false, on: "đứng trên thảm", near: "sát một tấm thảm" }
+const MD_VICTIM = { name: "Lâm", bg: "#b8473f", hair: "#3a2a20", hs: 0, shirt: "#3f63a8", skin: "#eeb487", victim: true };
+const MD_TOKEN = ["#2f6fd6", "#1e9c8f", "#7b55d1", "#c26b12", "#566012"];
+const MD_ROOMNAMES = ["Phòng khách", "Phòng ngủ", "Bếp", "Phòng ăn", "Thư viện", "Phòng tắm", "Sảnh", "Hành lang", "Phòng làm việc"];
+const MD_FLOORS = [
+  { base: "#cfe9e6", alt: "#b7dcd8", kind: "check" }, { base: "#d7c8ea", alt: "#c3b0de", kind: "plank" },
+  { base: "#ecd0dc", alt: "#ddb6c8", kind: "plank" }, { base: "#cfe0ef", alt: "#b9d5e8", kind: "diamond" },
+  { base: "#f1dfb8", alt: "#e4cb98", kind: "plank" }, { base: "#d6e8c4", alt: "#c0dba7", kind: "check" },
+  { base: "#f2d3bd", alt: "#e7bc9f", kind: "diamond" }, { base: "#e2e2d0", alt: "#cfcfb6", kind: "check" },
+  { base: "#d9d4ee", alt: "#c4bde3", kind: "diamond" }
+];
+// block: không đứng được. stand: đứng hoặc ngồi được.
+const MD_ITEMS = {
+  plant: { block: true, label: "cây cảnh", near: "Đứng cạnh một chậu cây cảnh." },
+  table: { block: true, label: "bàn", near: "Đứng cạnh một cái bàn." },
+  shelf: { block: true, label: "tủ sách", near: "Đứng cạnh một tủ sách." },
+  chair: { block: false, label: "ghế", on: "Ngồi trên một chiếc ghế." },
+  rug: { block: false, label: "thảm", on: "Đứng trên thảm." },
+  bed: { block: false, label: "giường", on: "Nằm trên giường." }
 };
-const COLS = "ABCDEF";
-function mdRooms(n) {
-  for (let t = 0; t < 400; t++) {
-    const room = Array(n * n).fill(-1), seeds = shuffle([...Array(n * n).keys()]).slice(0, n);
-    seeds.forEach((c, k) => room[c] = k);
-    const nb = i => [i - n, i + n, i % n ? i - 1 : -1, (i + 1) % n ? i + 1 : -1].filter(j => j >= 0 && j < n * n);
-    let left = n * n - n, guard = 0;
-    while (left && guard++ < 5000) {
-      const sizes = Array(n).fill(0); room.forEach(r => r >= 0 && sizes[r]++);
-      const order = [...Array(n).keys()].sort((a, b) => sizes[a] - sizes[b] + (Math.random() - .5) * 3);
-      for (const k of order) {
-        const front = []; room.forEach((r, i) => { if (r === k) nb(i).forEach(j => room[j] < 0 && front.push(j)); });
-        if (front.length) { room[front[rnd(front.length)]] = k; left--; break; }
-      }
+const mdNbr = (n, i) => [i - n, i + n, i % n ? i - 1 : -1, (i + 1) % n ? i + 1 : -1].filter(j => j >= 0 && j < n * n);
+function mdRooms(n, k) {
+  for (let t = 0; t < 200; t++) {
+    let rects = [{ r: 0, c: 0, h: n, w: n }];
+    while (rects.length < k) {
+      const can = rects.filter(x => x.h * x.w >= 4 && (x.h >= 2 || x.w >= 2)); if (!can.length) break;
+      can.sort((a, b) => b.h * b.w - a.h * a.w + (Math.random() - .5) * 4);
+      const x = can[0]; rects = rects.filter(y => y !== x);
+      const vert = x.w > x.h || (x.w === x.h && Math.random() < .5);
+      if (vert && x.w >= 2) { const s = 1 + rnd(x.w - 1); rects.push({ ...x, w: s }, { ...x, c: x.c + s, w: x.w - s }); }
+      else if (x.h >= 2) { const s = 1 + rnd(x.h - 1); rects.push({ ...x, h: s }, { ...x, r: x.r + s, h: x.h - s }); }
+      else rects.push(x);
     }
-    const sizes = Array(n).fill(0); room.forEach(r => r >= 0 && sizes[r]++);
-    if (!left && sizes.every(z => z >= 3 && z <= n + 3)) return room;
+    if (rects.length !== k || rects.some(x => x.h * x.w < 2)) continue;
+    const room = Array(n * n); rects.forEach((x, id) => { for (let r = x.r; r < x.r + x.h; r++) for (let c = x.c; c < x.c + x.w; c++) room[r * n + c] = id; });
+    return { room, rects };
   }
   return null;
 }
-function mdCheck(cl, pos, P) {
-  const a = pos[cl.p], b = cl.q !== undefined ? pos[cl.q] : null;
-  if (!a || (cl.q !== undefined && !b)) return true; // chưa đặt đủ thì chưa xét
-  const cell = a.r * P.n + a.c, room = P.room[cell];
-  switch (cl.t) {
-    case "in": return room === cl.room;
-    case "notin": return room !== cl.room;
-    case "on": return P.obj[cell] === cl.obj;
-    case "near": return P.nbr(cell).some(j => P.obj[j] === cl.obj);
-    case "row": return a.r === cl.v;
-    case "col": return a.c === cl.v;
-    case "same": return room === P.room[b.r * P.n + b.c];
-    case "diff": return room !== P.room[b.r * P.n + b.c];
-    case "above": return a.r < b.r;
-    case "left": return a.c < b.c;
+function mdLayout(n) {
+  const k = n === 4 ? 4 : n === 5 ? 5 : 6, R = mdRooms(n, k); if (!R) return null;
+  const names = shuffle(MD_ROOMNAMES.slice()).slice(0, k), floors = shuffle([...MD_FLOORS.keys()]).slice(0, k);
+  const bedroom = names.indexOf("Phòng ngủ");
+  const item = Array(n * n).fill(null), free = i => !item[i];
+  const cells = shuffle([...Array(n * n).keys()]);
+  // giường hai ô trong phòng ngủ
+  if (bedroom >= 0) for (const i of cells) { if (R.room[i] !== bedroom || !free(i)) continue;
+    const j = shuffle(mdNbr(n, i)).find(j => R.room[j] === bedroom && free(j)); if (j === undefined) continue;
+    item[i] = { k: "bed", part: 0, other: j }; item[j] = { k: "bed", part: 1, other: i }; break; }
+  const want = shuffle(["plant", "plant", "table", "shelf", "chair", "chair", "chair", "rug", "rug", ...(n >= 5 ? ["table", "chair", "plant"] : []), ...(n >= 6 ? ["shelf", "rug", "chair"] : [])]);
+  let blocked = 0;
+  for (const kind of want) {
+    const i = cells.find(x => free(x) && Math.random() < .5) ?? cells.find(free); if (i === undefined) break;
+    if (MD_ITEMS[kind].block) { if (blocked >= n - 1) continue; blocked++; }
+    item[i] = { k: kind };
   }
-  return true;
+  // cửa sổ trên tường ngoài
+  const wins = [], edges = [];
+  for (let c = 0; c < n; c++) edges.push({ i: c, s: "t" }, { i: (n - 1) * n + c, s: "b" });
+  for (let r = 0; r < n; r++) edges.push({ i: r * n, s: "l" }, { i: r * n + n - 1, s: "r" });
+  shuffle(edges).slice(0, n - 1 + rnd(2)).forEach(e => wins.push(e));
+  return { n, room: R.room, rects: R.rects, names, floors, item, wins };
 }
-function mdText(cl, P) {
-  const nm = i => P.people[i].name;
-  switch (cl.t) {
-    case "in": return `${nm(cl.p)} ở trong ${MD_ROOMS[cl.room].toLowerCase()}.`;
-    case "notin": return `${nm(cl.p)} không ở ${MD_ROOMS[cl.room].toLowerCase()}.`;
-    case "on": return `${nm(cl.p)} ${MD_OBJ[cl.obj].on}.`;
-    case "near": return `${nm(cl.p)} đứng ${MD_OBJ[cl.obj].near}.`;
-    case "row": return `${nm(cl.p)} ở hàng ${cl.v + 1}.`;
-    case "col": return `${nm(cl.p)} ở cột ${COLS[cl.v]}.`;
-    case "same": return `${nm(cl.p)} và ${nm(cl.q)} ở cùng một phòng.`;
-    case "diff": return `${nm(cl.p)} và ${nm(cl.q)} ở hai phòng khác nhau.`;
-    case "above": return `${nm(cl.p)} đứng ở hàng cao hơn ${nm(cl.q)}.`;
-    case "left": return `${nm(cl.p)} đứng ở cột bên trái ${nm(cl.q)}.`;
+function mdAtoms(L, i) {
+  const n = L.n, out = [], it = L.item[i];
+  out.push({ t: "room", v: L.room[i], w: 2 });
+  if (it && !MD_ITEMS[it.k].block) out.push({ t: "on", v: it.k, w: 3 });
+  if (L.wins.some(w => w.i === i)) out.push({ t: "win", w: 3 });
+  new Set(mdNbr(n, i).map(j => L.item[j] && MD_ITEMS[L.item[j].k].block ? L.item[j].k : null).filter(Boolean)).forEach(k => out.push({ t: "near", v: k, w: 3 }));
+  if (!it) out.push({ t: "empty", w: .6 });
+  out.push({ t: "row", v: Math.floor(i / n), w: .5 }, { t: "col", v: i % n, w: .5 });
+  return out;
+}
+function mdHolds(L, a, i) {
+  const n = L.n, it = L.item[i];
+  switch (a.t) {
+    case "room": return L.room[i] === a.v;
+    case "on": return !!it && it.k === a.v;
+    case "win": return L.wins.some(w => w.i === i);
+    case "near": return mdNbr(n, i).some(j => L.item[j] && L.item[j].k === a.v);
+    case "empty": return !it;
+    case "row": return Math.floor(i / n) === a.v;
+    case "col": return i % n === a.v;
+  }
+  return false;
+}
+function mdAtomText(L, a) {
+  switch (a.t) {
+    case "room": return `Ở trong ${L.names[a.v].toLowerCase()}.`;
+    case "on": return MD_ITEMS[a.v].on;
+    case "win": return "Đứng trước một cửa sổ.";
+    case "near": return MD_ITEMS[a.v].near;
+    case "empty": return "Đứng ở ô trống, không có đồ vật nào.";
+    case "row": return `Ở hàng ${a.v + 1}.`;
+    case "col": return `Ở cột ${COLS[a.v]}.`;
   }
   return "";
 }
-// Đếm số cách xếp người thỏa mọi gợi ý và luật, dừng ở limit.
-function mdCount(P, clues, limit) {
-  const n = P.n, V = n - 1, pos = Array(n).fill(null), usedR = Array(n).fill(false), usedC = Array(n).fill(false);
-  const uni = clues.filter(c => c.q === undefined), bin = clues.filter(c => c.q !== undefined);
-  const cand = [...Array(n).keys()].map(p => {
-    const out = [];
-    for (let i = 0; i < n * n; i++) if (!(P.obj[i] && MD_OBJ[P.obj[i]].block)) {
-      const pp = []; pp[p] = { r: Math.floor(i / n), c: i % n };
-      if (uni.every(cl => cl.p !== p || mdCheck(cl, pp, P))) out.push(pp[p]);
-    }
-    return out;
-  });
+function mdCardText(L, card) {
+  if (!card.length) return "Ở ô còn lại cuối cùng.";
+  if (card.length === 1) return mdAtomText(L, card[0]);
+  const a = mdAtomText(L, card[0]).replace(/\.$/, ""), b = mdAtomText(L, card[1]);
+  return `${a}, ${b.charAt(0).toLowerCase()}${b.slice(1)}`;
+}
+// Đếm số cách xếp thỏa mọi thẻ lời khai, dừng ở limit.
+function mdCount(L, cards, limit) {
+  const n = L.n, V = n - 1, open = i => !(L.item[i] && MD_ITEMS[L.item[i].k].block);
+  const cand = cards.map(cd => [...Array(n * n).keys()].filter(i => open(i) && cd.every(a => mdHolds(L, a, i))));
   const order = [...Array(n).keys()].sort((a, b) => cand[a].length - cand[b].length);
-  let count = 0;
-  const victimOk = () => { const vr = P.room[pos[V].r * n + pos[V].c]; return pos.filter((q, i) => i !== V && P.room[q.r * n + q.c] === vr).length === 1; };
+  const pos = Array(n), uR = Array(n).fill(false), uC = Array(n).fill(false); let count = 0;
   const rec = k => {
-    if (k === n) { if (victimOk()) count++; return count >= limit; }
+    if (k === n) { const vr = L.room[pos[V]]; if (pos.filter((x, p) => p !== V && L.room[x] === vr).length === 1) count++; return count >= limit; }
     const p = order[k];
-    for (const x of cand[p]) {
-      if (usedR[x.r] || usedC[x.c]) continue;
-      pos[p] = x; usedR[x.r] = usedC[x.c] = true;
-      if (bin.every(cl => (cl.p !== p && cl.q !== p) || mdCheck(cl, pos, P)) && rec(k + 1)) return true;
-      usedR[x.r] = usedC[x.c] = false; pos[p] = null;
-    }
+    for (const i of cand[p]) { const r = Math.floor(i / n), c = i % n; if (uR[r] || uC[c]) continue;
+      pos[p] = i; uR[r] = uC[c] = true; if (rec(k + 1)) return true; uR[r] = uC[c] = false; }
     return false;
   };
-  rec(0);
-  return count;
+  rec(0); return count;
 }
 function mdMake(n) {
-  for (let t = 0; t < 60; t++) {
-    const room = mdRooms(n); if (!room) continue;
-    const obj = Array(n * n).fill("");
-    const cells = shuffle([...Array(n * n).keys()]);
-    const kinds = shuffle(["cay", "cay", "tu", "ghe", "ghe", "ghe", "tham", "tham", ...(n > 5 ? ["tu", "ghe", "tham"] : [])]);
-    kinds.forEach((k, i) => obj[cells[i]] = k);
-    const people = [...MD_PEOPLE.slice(0, n - 1), MD_VICTIM];
-    const P = { n, room, obj, people, nbr: i => [i - n, i + n, i % n ? i - 1 : -1, (i + 1) % n ? i + 1 : -1].filter(j => j >= 0 && j < n * n) };
-    // xếp người: mỗi hàng một người, mỗi cột một người, không đứng trên đồ chắn
+  for (let t = 0; t < 600; t++) {
+    const L = mdLayout(n); if (!L) continue;
+    const open = i => !(L.item[i] && MD_ITEMS[L.item[i].k].block);
     let sol = null;
-    for (let k = 0; k < 200 && !sol; k++) {
-      const rows = shuffle([...Array(n).keys()]), cols = shuffle([...Array(n).keys()]);
-      const s = rows.map((r, p) => ({ r, c: cols[p] }));
-      if (s.some(x => obj[x.r * n + x.c] && MD_OBJ[obj[x.r * n + x.c]].block)) continue;
-      const vr = room[s[n - 1].r * n + s[n - 1].c];
-      if (s.filter((x, p) => p < n - 1 && room[x.r * n + x.c] === vr).length !== 1) continue;
+    for (let k = 0; k < 100 && !sol; k++) {
+      const rows = shuffle([...Array(n).keys()]), cols = shuffle([...Array(n).keys()]), s = rows.map((r, p) => r * n + cols[p]);
+      if (!s.every(open)) continue;
+      const vr = L.room[s[n - 1]]; if (s.filter((x, p) => p < n - 1 && L.room[x] === vr).length !== 1) continue;
       sol = s;
     }
     if (!sol) continue;
-    const V = n - 1, cellOf = p => sol[p].r * n + sol[p].c;
-    // mọi gợi ý đúng với lời giải
-    const pool = [];
-    for (let p = 0; p < n; p++) {
-      const c = cellOf(p);
-      pool.push({ t: "in", p, room: room[c], w: 3 });
-      for (let k = 0; k < n; k++) if (k !== room[c]) pool.push({ t: "notin", p, room: k, w: 1 });
-      if (obj[c] && !MD_OBJ[obj[c]].block) pool.push({ t: "on", p, obj: obj[c], w: 3 });
-      new Set(P.nbr(c).map(j => obj[j]).filter(Boolean)).forEach(o => pool.push({ t: "near", p, obj: o, w: 2 }));
-      pool.push({ t: "row", p, v: sol[p].r, w: 0.4 }, { t: "col", p, v: sol[p].c, w: 0.4 });
-      for (let q = 0; q < n; q++) if (q !== p) {
-        if (p !== V && q !== V && p < q) pool.push({ t: room[c] === room[cellOf(q)] ? "same" : "diff", p, q, w: 1.5 });
-        if (sol[p].r < sol[q].r) pool.push({ t: "above", p, q, w: 1 });
-        if (sol[p].c < sol[q].c) pool.push({ t: "left", p, q, w: 1 });
+    const atoms = sol.map(i => mdAtoms(L, i));
+    const pick = p => { const A = atoms[p], tot = A.reduce((s, a) => s + a.w, 0); let x = Math.random() * tot; for (const a of A) { x -= a.w; if (x <= 0) return a; } return A[0]; };
+    // thử nhiều bộ thẻ: mỗi người một lời khai, nạn nhân ở ô còn lại, cần thì ghép hai ý trong một thẻ
+    for (let pass = 0; pass < 3; pass++) for (let tr = 0; tr < 40; tr++) {
+      const cards = [];
+      for (let p = 0; p < n - 1; p++) {
+        const a = pick(p); let cd = [a];
+        if (pass > 0 && Math.random() < (pass === 1 ? .25 : .45)) { const b = pick(p); if (b.t !== a.t && !(["row", "col"].includes(a.t) && ["row", "col"].includes(b.t))) cd = b.t === "room" ? [b, a] : [a, b]; }
+        cards.push(cd);
+      }
+      cards.push(pass === 2 && Math.random() < .3 ? [pick(n - 1)] : []);
+      if (cards.reduce((s, c) => s + (c.length > 1), 0) > Math.floor(n / 2)) continue;
+      if (mdCount(L, cards, 2) === 1) {
+        const vr = L.room[sol[n - 1]], killer = sol.findIndex((x, p) => p < n - 1 && L.room[x] === vr);
+        return { ...L, sol, killer, cards };
       }
     }
-    pool.forEach(x => x.k = Math.random() * x.w); pool.sort((a, b) => b.k - a.k);
-    const clues = [];
-    for (const cl of pool) {
-      clues.push(cl);
-      if (mdCount(P, clues, 2) === 1) break;
-      if (clues.length > n * 3) break;
-    }
-    if (mdCount(P, clues, 2) !== 1) continue;
-    for (let i = clues.length - 1; i >= 0; i--) { const rest = clues.filter((_, j) => j !== i); if (mdCount(P, rest, 2) === 1) clues.splice(i, 1); }
-    if (clues.length > n + 4) continue;
-    const vr = room[cellOf(V)], killer = sol.findIndex((x, p) => p !== V && room[x.r * n + x.c] === vr);
-    shuffle(clues);
-    return { n, room, obj, sol, killer, clues: clues.map(({ w, k, ...c }) => c) };
   }
   return null;
 }
-G.murdoku = { kind: "solo", name: "Truy án ô vuông", desc: "Giải đố kiểu Murdoku. Xếp từng người vào sơ đồ căn nhà theo lời khai, mỗi hàng và mỗi cột có đúng một người. Xếp xong thì chỉ ra hung thủ.",
+/* ---------- vẽ ---------- */
+function mdAvatar(p) {
+  const h = p.hair, hair = [
+    `<path d="M22 40 Q22 18 40 18 Q58 18 58 40 Q54 28 40 28 Q26 28 22 40Z" fill="${h}"/>`,
+    `<path d="M21 38 Q20 14 40 15 Q60 14 59 38 L56 30 Q48 24 40 26 Q30 24 24 30Z" fill="${h}"/><path d="M26 22 Q34 10 50 16" stroke="${h}" stroke-width="6" fill="none"/>`,
+    `<path d="M20 62 Q16 20 40 17 Q64 20 60 62 L54 62 Q56 34 40 30 Q24 34 26 62Z" fill="${h}"/>`,
+    `<circle cx="40" cy="14" r="9" fill="${h}"/><path d="M22 38 Q22 19 40 19 Q58 19 58 38 Q52 27 40 27 Q28 27 22 38Z" fill="${h}"/>`,
+    `<path d="M20 58 Q14 18 40 16 Q66 18 60 58 Q58 40 54 32 Q40 26 26 32 Q22 40 20 58Z" fill="${h}"/>`
+  ][p.hs];
+  return `<svg viewBox="0 0 80 80" aria-hidden="true"><rect width="80" height="80" fill="${p.bg}"/>
+    <path d="M10 80 Q12 60 40 58 Q68 60 70 80Z" fill="${p.shirt}"/><rect x="34" y="48" width="12" height="12" fill="${p.skin}"/>
+    <ellipse cx="40" cy="38" rx="16" ry="19" fill="${p.skin}"/>${hair}
+    ${p.victim ? `<path d="M16 16 L64 64 M64 16 L16 64" stroke="#d62828" stroke-width="5" stroke-linecap="round" opacity=".85"/>` : ""}</svg>`;
+}
+function mdFloorDefs(id, L) {
+  return L.floors.map((f, k) => {
+    const F = MD_FLOORS[f], pid = `${id}-f${k}`;
+    if (F.kind === "check") return `<pattern id="${pid}" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="${F.base}"/><rect width="15" height="15" fill="${F.alt}"/><rect x="15" y="15" width="15" height="15" fill="${F.alt}"/></pattern>`;
+    if (F.kind === "plank") return `<pattern id="${pid}" width="40" height="20" patternUnits="userSpaceOnUse"><rect width="40" height="20" fill="${F.base}"/><path d="M0 10 H40 M0 0 H40 M12 0 V10 M32 10 V20" stroke="${F.alt}" stroke-width="2"/></pattern>`;
+    return `<pattern id="${pid}" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="${F.base}"/><path d="M15 0 L30 15 L15 30 L0 15Z" fill="${F.alt}"/></pattern>`;
+  }).join("");
+}
+function mdItemSVG(L, i, x, y, S) {
+  const it = L.item[i]; if (!it) return "";
+  const n = L.n, cx = x + S / 2, cy = y + S / 2;
+  switch (it.k) {
+    case "plant": return `<g><path d="M${cx - 11} ${cy + 4} L${cx + 11} ${cy + 4} L${cx + 8} ${cy + 22} L${cx - 8} ${cy + 22}Z" fill="#4f6fb5" stroke="#2c3e70" stroke-width="1.5"/>
+      ${[-40, -18, 0, 18, 40].map(a => `<ellipse cx="${cx}" cy="${cy - 8}" rx="4.5" ry="15" fill="${a % 36 ? "#3f8f3a" : "#58a84a"}" transform="rotate(${a} ${cx} ${cy + 4})"/>`).join("")}</g>`;
+    case "table": return `<g><rect x="${x + 7}" y="${y + 9}" width="${S - 14}" height="${S - 22}" rx="3" fill="#9fb0cf" stroke="#2f3a55" stroke-width="2"/><rect x="${x + 11}" y="${y + S - 14}" width="5" height="8" fill="#2f3a55"/><rect x="${x + S - 16}" y="${y + S - 14}" width="5" height="8" fill="#2f3a55"/></g>`;
+    case "shelf": return `<g><rect x="${x + 8}" y="${y + 6}" width="${S - 16}" height="${S - 12}" fill="#8a5a34" stroke="#4a2f1a" stroke-width="2"/>${[0, 1, 2].map(r => `<line x1="${x + 8}" x2="${x + S - 8}" y1="${y + 6 + (S - 12) * (r + 1) / 3}" y2="${y + 6 + (S - 12) * (r + 1) / 3}" stroke="#4a2f1a" stroke-width="2"/>` + [0, 1, 2, 3].map(b => `<rect x="${x + 11 + b * 9}" y="${y + 9 + r * (S - 12) / 3}" width="6" height="${(S - 12) / 3 - 5}" fill="${["#d24b3e", "#3f7fd0", "#e2b23a", "#4aa36b"][(b + r) % 4]}"/>`).join("")).join("")}</g>`;
+    case "chair": return `<g><rect x="${cx - 12}" y="${cy - 2}" width="24" height="14" rx="2" fill="#b07a4a" stroke="#5a3a20" stroke-width="2"/><rect x="${cx - 12}" y="${cy - 16}" width="24" height="7" rx="2" fill="#8c5a32" stroke="#5a3a20" stroke-width="2"/><line x1="${cx - 9}" x2="${cx - 9}" y1="${cy - 9}" y2="${cy - 2}" stroke="#5a3a20" stroke-width="3"/><line x1="${cx + 9}" x2="${cx + 9}" y1="${cy - 9}" y2="${cy - 2}" stroke="#5a3a20" stroke-width="3"/></g>`;
+    case "rug": return `<g><rect x="${x + 5}" y="${y + 5}" width="${S - 10}" height="${S - 10}" fill="#c9a6e0" stroke="#6a4c8c" stroke-width="2"/><rect x="${x + 11}" y="${y + 11}" width="${S - 22}" height="${S - 22}" fill="none" stroke="#6a4c8c" stroke-width="1.5" stroke-dasharray="4 3"/></g>`;
+    case "bed": {
+      if (it.part === 1) return "";
+      const j = it.other, r0 = Math.min(Math.floor(i / n), Math.floor(j / n)), c0 = Math.min(i % n, j % n), hor = Math.floor(i / n) === Math.floor(j / n);
+      const bx = c0 * S + (x - (i % n) * S), by = r0 * S + (y - Math.floor(i / n) * S), w = hor ? 2 * S : S, h = hor ? S : 2 * S;
+      return `<g><rect x="${bx + 7}" y="${by + 7}" width="${w - 14}" height="${h - 14}" rx="4" fill="#f7f7f2" stroke="#4a4f6a" stroke-width="2"/>
+        ${hor ? `<rect x="${bx + 11}" y="${by + 14}" width="14" height="${h - 28}" rx="3" fill="#fff" stroke="#4a4f6a" stroke-width="1.5"/><rect x="${bx + 30}" y="${by + 9}" width="${w - 39}" height="${h - 18}" rx="3" fill="#8fb0d9"/>`
+              : `<rect x="${bx + 14}" y="${by + 11}" width="${w - 28}" height="14" rx="3" fill="#fff" stroke="#4a4f6a" stroke-width="1.5"/><rect x="${bx + 9}" y="${by + 30}" width="${w - 18}" height="${h - 39}" rx="3" fill="#8fb0d9"/>`}</g>`;
+    }
+  }
+  return "";
+}
+function mdBoardSVG(L, id, st) {
+  const n = L.n, S = 64, M = 26, W = n * S + 2 * M, ppl = st.people;
+  let s = `<svg viewBox="0 0 ${W} ${W}" class="mdsvg" role="img" aria-label="Sơ đồ căn nhà ${n} x ${n}"><defs>${mdFloorDefs(id, L)}</defs><g transform="translate(${M} ${M})">`;
+  L.rects.forEach((x, k) => s += `<rect x="${x.c * S}" y="${x.r * S}" width="${x.w * S}" height="${x.h * S}" fill="url(#${id}-f${k})"/>`);
+  for (let i = 1; i < n; i++) s += `<line x1="${i * S}" x2="${i * S}" y1="0" y2="${n * S}" class="mdgrid"/><line y1="${i * S}" y2="${i * S}" x1="0" x2="${n * S}" class="mdgrid"/>`;
+  for (let i = 0; i < n * n; i++) s += mdItemSVG(L, i, (i % n) * S, Math.floor(i / n) * S, S);
+  // tường giữa các phòng
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) { const i = r * n + c;
+    if (c < n - 1 && L.room[i] !== L.room[i + 1]) s += `<line x1="${(c + 1) * S}" x2="${(c + 1) * S}" y1="${r * S - 3}" y2="${(r + 1) * S + 3}" class="mdwall"/>`;
+    if (r < n - 1 && L.room[i] !== L.room[i + n]) s += `<line y1="${(r + 1) * S}" y2="${(r + 1) * S}" x1="${c * S - 3}" x2="${(c + 1) * S + 3}" class="mdwall"/>`; }
+  s += `<rect x="0" y="0" width="${n * S}" height="${n * S}" fill="none" class="mdouter"/>`;
+  L.wins.forEach(w => { const r = Math.floor(w.i / n), c = w.i % n, a = 14, len = S - 28;
+    const [x, y, ww, hh] = w.s === "t" ? [c * S + a, -6, len, 12] : w.s === "b" ? [c * S + a, n * S - 6, len, 12] : w.s === "l" ? [-6, r * S + a, 12, len] : [n * S - 6, r * S + a, 12, len];
+    s += `<rect x="${x}" y="${y}" width="${ww}" height="${hh}" rx="5" fill="#e9f6fb" stroke="#2a3140" stroke-width="2.5"/><rect x="${x + (ww > hh ? 6 : 3)}" y="${y + (ww > hh ? 3 : 6)}" width="${ww > hh ? ww - 12 : 6}" height="${ww > hh ? 6 : hh - 12}" rx="3" fill="#9fd1e8"/>`; });
+  L.rects.forEach((x, k) => { const label = L.names[k].toUpperCase(), need = label.length * 7.4 + 16;
+    // phòng hẹp thì tên chạy dọc sát tường phải để không bị cắt chữ
+    const vert = need > x.w * S - 6 && x.h * S > x.w * S, tw = Math.min((vert ? x.h : x.w) * S - 8, need);
+    const cx = vert ? (x.c + x.w) * S - 12 : x.c * S + x.w * S / 2, cy = vert ? x.r * S + x.h * S / 2 : (x.r + x.h) * S - 12.5;
+    s += `<g class="mdlabel"${vert ? ` transform="rotate(-90 ${cx} ${cy})"` : ""}><rect x="${cx - tw / 2}" y="${cy - 8.5}" width="${tw}" height="17" rx="8.5"/><text x="${cx}" y="${cy + 4}" text-anchor="middle">${esc(label)}</text></g>`; });
+  for (let i = 0; i < n * n; i++) { const x = (i % n) * S, y = Math.floor(i / n) * S, who = st.place.indexOf(i);
+    if (who >= 0) s += `<g class="mdtok"><circle cx="${x + S / 2}" cy="${y + S / 2 - 2}" r="19" fill="${who === n - 1 ? "#c23b3b" : MD_TOKEN[who]}" stroke="#fff" stroke-width="3"/><text x="${x + S / 2}" y="${y + S / 2 + 6}" text-anchor="middle">${esc(ppl[who].name[0])}</text></g>`;
+    else if (st.marks.has(i)) s += `<text x="${x + S / 2}" y="${y + S / 2 + 10}" text-anchor="middle" class="mdxm">×</text>`;
+    s += `<rect x="${x}" y="${y}" width="${S}" height="${S}" fill="transparent" class="mdhit" data-i="${i}"><title>Ô ${COLS[i % n]}${Math.floor(i / n) + 1}</title></rect>`; }
+  for (let c = 0; c < n; c++) s += `<text x="${c * S + S / 2}" y="-12" text-anchor="middle" class="mdcoord">${COLS[c]}</text>`;
+  for (let r = 0; r < n; r++) s += `<text x="-17" y="${r * S + S / 2 + 4}" text-anchor="middle" class="mdcoord">${r + 1}</text>`;
+  return s + `</g></svg>`;
+}
+let mdSeq = 0;
+G.murdoku = { kind: "solo", name: "Truy án ô vuông", desc: "Giải đố kiểu Murdoku. Đọc thẻ lời khai của từng người rồi xếp họ vào sơ đồ căn nhà. Xếp xong thì chỉ ra hung thủ.",
   mount(el) {
-    el.innerHTML = `<div class="score"><span id="md-n">NHÀ 6 x 6</span><span id="md-t">00:00</span></div>
-      <div class="mdwrap"><div class="mdk" id="md-b" aria-label="Sơ đồ căn nhà"></div>
-        <div class="mdside"><div class="mdppl" id="md-ppl"></div><ol class="mdclues" id="md-cl"></ol><div class="mdleg" id="md-leg"></div></div></div>
+    const id = "md" + (++mdSeq), KEY = "tlc-murdoku";
+    el.innerHTML = `<div class="score"><span id="md-n">VỤ ÁN</span><span id="md-t">00:00</span></div>
+      <div class="mdbook"><div class="mdcards" id="md-cards"></div><div class="mdplan"><div id="md-b"></div>
+        <div class="mdverdict"><span>Hung thủ là</span><div id="md-acc"></div></div></div></div>
       <div class="lcdrow"><button class="lcdbtn" id="md-x" aria-pressed="false">ĐÁNH DẤU X: TẮT</button><button class="lcdbtn" id="md-ok">KIỂM TRA</button><button class="lcdbtn" id="md-show">XEM LỜI GIẢI</button></div>
-      <div class="lcdrow" id="md-acc"></div>
-      <div class="lcdrow"><button class="lcdbtn" data-n="5">VÁN MỚI 5 x 5</button><button class="lcdbtn" data-n="6">VÁN MỚI 6 x 6</button></div>
-      <div class="msg" id="md-msg" aria-live="polite"></div>`;
-    let P = null, n = 6, place = [], marks = new Set(), cur = 0, xMode = false, accused = -1, done = false, sec = 0;
-    const T = setInterval(() => { if (P && !done && !document.hidden) { sec++; $("#md-t", el).textContent = mmss(sec); } }, 1000);
-    const people = () => [...MD_PEOPLE.slice(0, n - 1), MD_VICTIM];
-    function fresh(size) {
-      n = size; $("#md-msg", el).textContent = "Đang dựng hiện trường.";
-      setTimeout(() => {
-        P = mdMake(n); if (!P) { $("#md-msg", el).textContent = "Chưa tạo được vụ án, bấm ván mới lần nữa."; return; }
-        P.people = people(); P.nbr = i => [i - n, i + n, i % n ? i - 1 : -1, (i + 1) % n ? i + 1 : -1].filter(j => j >= 0 && j < n * n);
-        place = Array(n).fill(-1); marks = new Set(); cur = 0; accused = -1; done = false; sec = 0;
-        draw(); $("#md-msg", el).textContent = `Nạn nhân là ${MD_VICTIM.name}. Trong phòng của ${MD_VICTIM.name} chỉ có thêm một người, đó là hung thủ.`;
-      }, 20);
+      <div class="lcdrow"><button class="lcdbtn" data-n="4">VỤ 4 x 4</button><button class="lcdbtn" data-n="5">VỤ 5 x 5</button><button class="lcdbtn" data-n="6">VỤ 6 x 6</button></div>
+      <div class="msg" id="md-msg" aria-live="polite"></div>
+      <p class="mdrule">Mỗi hàng và mỗi cột có đúng một người. Không ai đứng ở ô có cây cảnh, bàn hay tủ sách. Trong phòng của nạn nhân chỉ có thêm một người, đó là hung thủ.</p>`;
+    let P = null, st = null;
+    const save = () => P && store.set(KEY, { P, place: st.place, marks: [...st.marks], accused: st.accused, done: st.done, sec: st.sec, cur: st.cur });
+    const T = setInterval(() => { if (P && !st.done && !document.hidden) { st.sec++; $("#md-t", el).textContent = mmss(st.sec); if (st.sec % 10 === 0) save(); } }, 1000);
+    let xMode = false;
+    function start(data) {
+      P = data.P; const n = P.n;
+      st = { people: [...MD_SUSPECTS.slice(0, n - 1), MD_VICTIM], place: data.place || Array(n).fill(-1), marks: new Set(data.marks || []), cur: data.cur || 0, accused: data.accused ?? -1, done: !!data.done, sec: data.sec || 0 };
+      draw();
+    }
+    function fresh(n) {
+      $("#md-msg", el).textContent = "Đang dựng hiện trường.";
+      setTimeout(() => { const p = mdMake(n); if (!p) { $("#md-msg", el).textContent = "Chưa tạo được vụ án, bấm lần nữa."; return; }
+        start({ P: p }); save(); $("#md-msg", el).textContent = `Bấm vào thẻ một người rồi bấm vào ô trên sơ đồ để đặt người đó.`; }, 20);
     }
     function draw() {
-      const ppl = P.people, b = $("#md-b", el);
-      $("#md-n", el).textContent = `NHÀ ${n} x ${n}`;
-      b.style.gridTemplateColumns = `22px repeat(${n}, minmax(0, 1fr))`;
-      let h = `<span></span>` + [...Array(n).keys()].map(c => `<span class="mdh">${COLS[c]}</span>`).join("");
-      for (let r = 0; r < n; r++) {
-        h += `<span class="mdh">${r + 1}</span>`;
-        for (let c = 0; c < n; c++) {
-          const i = r * n + c, rm = P.room[i], o = P.obj[i], who = place.indexOf(i);
-          const bd = [r === 0 || P.room[i - n] !== rm, c === n - 1 || P.room[i + 1] !== rm, r === n - 1 || P.room[i + n] !== rm, c === 0 || P.room[i - 1] !== rm].map(x => x ? "3px solid #24321c" : "1px dashed rgba(36,50,28,.35)");
-          const blk = o && MD_OBJ[o].block;
-          h += `<button class="mdc${o === "tham" ? " rug" : ""}${blk ? " blk" : ""}" data-i="${i}" style="background-color:${MD_COLORS[rm]};border-top:${bd[0]};border-right:${bd[1]};border-bottom:${bd[2]};border-left:${bd[3]}" aria-label="Ô ${COLS[c]}${r + 1}, ${MD_ROOMS[rm]}${o ? ", " + MD_OBJ[o].label : ""}${who >= 0 ? ", " + ppl[who].name : ""}">
-            ${o && MD_OBJ[o].icon ? `<span class="mdo">${MD_OBJ[o].icon}</span>` : ""}${who >= 0 ? `<span class="mdp" style="background:${ppl[who].col}">${esc(ppl[who].name[0])}</span>` : marks.has(i) ? `<span class="mdx">×</span>` : ""}</button>`;
-        }
-      }
-      b.innerHTML = h;
-      $("#md-ppl", el).innerHTML = ppl.map((p, k) => `<button class="mdchip${k === cur && !xMode ? " on" : ""}" data-p="${k}" style="--pc:${p.col}"><span class="mdp" style="background:${p.col}">${esc(p.name[0])}</span>${esc(p.name)}${k === n - 1 ? " · nạn nhân" : ""}${place[k] >= 0 ? ` · ${COLS[place[k] % n]}${Math.floor(place[k] / n) + 1}` : ""}</button>`).join("");
-      $("#md-cl", el).innerHTML = P.clues.map(cl => `<li>${esc(mdText(cl, P))}</li>`).join("");
-      $("#md-leg", el).innerHTML = MD_ROOMS.slice(0, n).map((r, k) => `<span><i style="background:${MD_COLORS[k]}"></i>${esc(r)}</span>`).join("") +
-        Object.values(MD_OBJ).map(o => `<span>${o.icon ? o.icon : `<i class="rug"></i>`} ${esc(o.label)}${o.block ? ", không đứng được" : ""}</span>`).join("");
-      $("#md-acc", el).innerHTML = `<span class="small">HUNG THỦ LÀ</span>` + ppl.slice(0, n - 1).map((p, k) => `<button class="lcdbtn${accused === k ? " on" : ""}" data-a="${k}" aria-pressed="${accused === k}">${esc(p.name.toUpperCase())}</button>`).join("");
+      const n = P.n;
+      $("#md-n", el).textContent = `VỤ ÁN ${n} x ${n} · ${n} NGƯỜI`;
+      $("#md-cards", el).innerHTML = st.people.map((p, k) => `<button class="mdcard${k === st.cur && !xMode ? " on" : ""}${p.victim ? " victim" : ""}" data-p="${k}">
+        <span class="mdpic">${mdAvatar(p)}</span><span class="mdname">${esc(p.name)}${st.place[k] >= 0 ? ` <small>${COLS[st.place[k] % n]}${Math.floor(st.place[k] / n) + 1}</small>` : ""}</span>
+        <span class="mdsay">${p.victim ? "<b>NẠN NHÂN</b> " : ""}${esc(mdCardText(P, P.cards[k]))}</span></button>`).join("");
+      $("#md-b", el).innerHTML = mdBoardSVG(P, id, { ...st, done: st.done });
+      $("#md-acc", el).innerHTML = st.people.slice(0, n - 1).map((p, k) => `<button class="lcdbtn${st.accused === k ? " on" : ""}" data-a="${k}" aria-pressed="${st.accused === k}">${esc(p.name.toUpperCase())}</button>`).join("");
+      $("#md-t", el).textContent = mmss(st.sec);
     }
     el.addEventListener("click", e => {
       if (!P) return;
-      const c = e.target.closest(".mdc");
-      if (c && !done) {
-        const i = +c.dataset.i, who = place.indexOf(i);
-        if (P.obj[i] && MD_OBJ[P.obj[i]].block) { $("#md-msg", el).textContent = `Không ai đứng được ở ô có ${MD_OBJ[P.obj[i]].label}.`; return; }
-        if (xMode) { if (who < 0) marks.has(i) ? marks.delete(i) : marks.add(i); }
-        else if (who >= 0) { place[who] = -1; cur = who; }
-        else { place[cur] = i; marks.delete(i); const nx = place.findIndex(x => x < 0); if (nx >= 0) cur = nx; }
-        $("#md-msg", el).textContent = ""; draw(); return;
+      const hit = e.target.closest(".mdhit");
+      if (hit && !st.done) {
+        const i = +hit.dataset.i, who = st.place.indexOf(i), it = P.item[i];
+        if (it && MD_ITEMS[it.k].block) { $("#md-msg", el).textContent = `Không ai đứng được ở ô có ${MD_ITEMS[it.k].label}.`; return; }
+        if (xMode) { if (who < 0) st.marks.has(i) ? st.marks.delete(i) : st.marks.add(i); }
+        else if (who >= 0) { st.place[who] = -1; st.cur = who; }
+        else { st.place[st.cur] = i; st.marks.delete(i); const nx = st.place.findIndex(x => x < 0); if (nx >= 0) st.cur = nx; }
+        $("#md-msg", el).textContent = ""; save(); draw(); return;
       }
-      const p = e.target.closest("[data-p]"); if (p) { cur = +p.dataset.p; xMode = false; $("#md-x", el).textContent = "ĐÁNH DẤU X: TẮT"; draw(); return; }
-      const a = e.target.closest("[data-a]"); if (a && !done) { accused = +a.dataset.a; draw(); return; }
+      const p = e.target.closest("[data-p]"); if (p) { st.cur = +p.dataset.p; xMode = false; $("#md-x", el).textContent = "ĐÁNH DẤU X: TẮT"; draw(); return; }
+      const a = e.target.closest("[data-a]"); if (a && !st.done) { st.accused = +a.dataset.a; save(); draw(); return; }
       const nb = e.target.closest("[data-n]"); if (nb) fresh(+nb.dataset.n);
     });
     $("#md-x", el).onclick = e => { xMode = !xMode; e.target.textContent = "ĐÁNH DẤU X: " + (xMode ? "BẬT" : "TẮT"); e.target.setAttribute("aria-pressed", String(xMode)); if (P) draw(); };
     $("#md-ok", el).onclick = () => {
-      if (!P || done) return;
-      const m = $("#md-msg", el), ppl = P.people;
-      if (place.some(x => x < 0)) { m.textContent = `Còn ${place.filter(x => x < 0).length} người chưa có chỗ đứng.`; return; }
-      const rows = new Set(place.map(i => Math.floor(i / n))), cols = new Set(place.map(i => i % n));
-      if (rows.size < n || cols.size < n) { m.textContent = "Có hàng hoặc cột đang có hai người."; return; }
-      const pos = place.map(i => ({ r: Math.floor(i / n), c: i % n })), bad = P.clues.findIndex(cl => !mdCheck(cl, pos, P));
-      if (bad >= 0) { m.textContent = `Lời khai số ${bad + 1} chưa khớp.`; return; }
-      const wrong = place.filter((i, p) => i !== P.sol[p].r * n + P.sol[p].c).length;
-      if (wrong) { m.textContent = `Lời khai đều khớp nhưng còn ${wrong} người đứng sai chỗ. Xem lại luật hung thủ ở cùng phòng nạn nhân.`; return; }
-      if (accused < 0) { m.textContent = "Sơ đồ đã đúng. Chọn hung thủ ở hàng nút bên trên."; return; }
-      done = true;
-      m.textContent = accused === P.killer ? `Đúng, ${ppl[P.killer].name} là hung thủ. Phá án trong ${mmss(sec)}.` : `Sơ đồ đúng nhưng hung thủ là ${ppl[P.killer].name}, người ở cùng phòng với ${MD_VICTIM.name}.`;
+      if (!P || st.done) return;
+      const n = P.n, m = $("#md-msg", el), ppl = st.people;
+      if (st.place.some(x => x < 0)) { m.textContent = `Còn ${st.place.filter(x => x < 0).length} người chưa có chỗ.`; return; }
+      if (new Set(st.place.map(i => Math.floor(i / n))).size < n || new Set(st.place.map(i => i % n)).size < n) { m.textContent = "Có hàng hoặc cột đang có hai người."; return; }
+      const bad = st.place.findIndex((i, k) => !P.cards[k].every(a => mdHolds(P, a, i)));
+      if (bad >= 0) { m.textContent = `Lời khai của ${ppl[bad].name} chưa khớp với chỗ đứng.`; return; }
+      const wrong = st.place.filter((i, k) => i !== P.sol[k]).length;
+      if (wrong) { m.textContent = `Lời khai đều khớp nhưng còn ${wrong} người sai chỗ. Nhớ luật hung thủ ở cùng phòng nạn nhân.`; return; }
+      if (st.accused < 0) { m.textContent = "Sơ đồ đã đúng. Chọn hung thủ ở ô Hung thủ là."; return; }
+      st.done = true; save(); draw();
+      m.textContent = st.accused === P.killer ? `Đúng, ${ppl[P.killer].name} là hung thủ. Phá án trong ${dur(st.sec)}.` : `Sơ đồ đúng nhưng hung thủ là ${ppl[P.killer].name}, người ở cùng phòng với ${MD_VICTIM.name}.`;
     };
-    $("#md-show", el).onclick = () => { if (!P) return; place = P.sol.map(x => x.r * n + x.c); accused = P.killer; done = true; draw(); $("#md-msg", el).textContent = `Hung thủ là ${P.people[P.killer].name}.`; };
-    fresh(6);
-    return () => clearInterval(T);
+    $("#md-show", el).onclick = () => { if (!P) return; st.place = P.sol.slice(); st.accused = P.killer; st.done = true; save(); draw(); $("#md-msg", el).textContent = `Hung thủ là ${st.people[P.killer].name}.`; };
+    const old = store.get(KEY);
+    if (old && old.P && old.P.cards && !old.done) { start(old); $("#md-msg", el).textContent = "Đang điều tra tiếp vụ lần trước."; } else fresh(4);
+    return () => { clearInterval(T); save(); };
   } };
 
 /* ================= SOLO: Ô chữ ================= */
@@ -492,7 +567,7 @@ G.crossword = { kind: "solo", name: "Ô chữ", desc: "Đọc gợi ý hàng nga
       if (nk >= 0 && nk < w.w.length) focus(w.r + w.dr * nk, w.c + w.dc * nk);
     }
     function checkWin() {
-      if (P.sol.every((row, r) => row.every((ch, c) => !ch || val[r][c] === ch))) { done = true; $("#cw-msg", el).textContent = `Xong ô chữ ${P.words.length} từ trong ${mmss(sec)}.`; }
+      if (P.sol.every((row, r) => row.every((ch, c) => !ch || val[r][c] === ch))) { done = true; $("#cw-msg", el).textContent = `Xong ô chữ ${P.words.length} từ trong ${dur(sec)}.`; }
     }
     el.addEventListener("focusin", e => { const i = e.target.closest(".cwc input"); if (i) { const r = +i.dataset.r, c = +i.dataset.c; if (!cur || cur.r !== r || cur.c !== c) { cur = { r, c }; paint(); } } });
     el.addEventListener("mousedown", e => {
